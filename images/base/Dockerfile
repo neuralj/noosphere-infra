@@ -1,7 +1,7 @@
 FROM ubuntu:24.04
 
 LABEL maintainer="travis"
-LABEL description="Noosphere workspace: Python + Go + SSH + zsh + code-server + opencode + Jupyter + scrapling"
+LABEL description="Noosphere workspace: Python + Go + SSH + zsh + code-server + Jupyter + scrapling"
 
 ARG USERNAME=travis
 ARG USER_PASSWORD=neural
@@ -12,7 +12,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
     LANG=en_US.UTF-8 \
     LC_ALL=en_US.UTF-8 \
     VIRTUAL_ENV=/opt/pyvenv \
-    PATH="/opt/pyvenv/bin:/home/${USERNAME}/.opencode/bin:${PATH}" \
+    PATH="/opt/pyvenv/bin:${PATH}" \
     PLAYWRIGHT_BROWSERS_PATH=/home/${USERNAME}/.cache/ms-playwright
 
 # System packages
@@ -80,10 +80,6 @@ RUN curl -fsSL https://code-server.dev/install.sh | sh
 
 USER ${USERNAME}
 
-# opencode
-RUN mkdir -p ~/.config/opencode ~/.config/code-server ~/.local/share/code-server/extensions \
-    && curl -fsSL https://opencode.ai/install | bash
-
 # Playwright browsers
 RUN playwright install --with-deps chromium
 
@@ -96,6 +92,6 @@ RUN mkdir -p /var/run/sshd \
 # supervisord config
 COPY files/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-EXPOSE 22 8080 4096 8888
+EXPOSE 22 8080 8888
 
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
