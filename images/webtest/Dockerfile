@@ -29,7 +29,6 @@ ENV NODE_PATH=/usr/local/lib/node_modules
 
 WORKDIR /tests
 
-# ── Non-root user for test execution ──
-RUN useradd --create-home --shell /bin/bash pwuser \
-    && chown -R pwuser:pwuser /tests /ms-playwright
+# ── Use existing pwuser from base image ──
+RUN chown -R pwuser:pwuser /tests /ms-playwright
 USER pwuser
