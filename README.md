@@ -25,6 +25,16 @@ Single fat container containing:
 
 **Image**: `ghcr.io/xtin59s/devshell:latest`
 
+### WebTest Image
+
+DevShell + visual regression testing tools:
+- Playwright (Chromium)
+- pixelmatch (image comparison)
+- pngjs (PNG manipulation)
+- ImageMagick (image processing)
+
+**Image**: `ghcr.io/xtin59s/webtest:latest`
+
 ## Usage
 
 ### Pull the image

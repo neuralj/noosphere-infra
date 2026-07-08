@@ -6,10 +6,11 @@ Single CI workflow (`build.yml`) triggers on `images/**`, `.github/workflows/**`
 
 - `images/devshell` — fat container: Python 3.12 + Go + SSH + zsh/Oh My Zsh/Powerlevel10k + code-server + opencode + Jupyter + scrapling + Playwright + supervisord
 - `images/postgres` — `FROM postgres:17` with `TZ=Asia/Shanghai`
+- `images/webtest` — devshell + Playwright + pixelmatch + pngjs + ImageMagick for visual regression testing
 
 ## Registry
 
-`ghcr.io/xtin59s/{devshell,postgres:17}:latest` (also tagged with SHA)
+`ghcr.io/xtin59s/{devshell,postgres:17,webtest}:latest` (also tagged with SHA)
 
 ## Compose (`compose/workspace.yml`)
 

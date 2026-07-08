@@ -65,6 +65,18 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Build and push webtest (${{ matrix.arch }})
+        uses: docker/build-push-action@v5
+        with:
+          context: ./images/webtest
+          platforms: ${{ matrix.platform }}
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/webtest:latest-${{ matrix.arch }}
+            ghcr.io/${{ github.repository_owner }}/webtest:${{ github.sha }}-${{ matrix.arch }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
   merge-manifests:
     needs: build
     runs-on: ubuntu-latest
@@ -102,3 +114,13 @@ jobs:
             "ghcr.io/${{ github.repository_owner }}/postgres:17-${SHA_SHORT}" \
             "ghcr.io/${{ github.repository_owner }}/postgres:17-${SHA}-amd64" \
             "ghcr.io/${{ github.repository_owner }}/postgres:17-${SHA}-arm64"
+          
+          docker buildx imagetools create -t \
+            "ghcr.io/${{ github.repository_owner }}/webtest:latest" \
+            "ghcr.io/${{ github.repository_owner }}/webtest:latest-amd64" \
+            "ghcr.io/${{ github.repository_owner }}/webtest:latest-arm64"
+          
+          docker buildx imagetools create -t \
+            "ghcr.io/${{ github.repository_owner }}/webtest:${SHA_SHORT}" \
+            "ghcr.io/${{ github.repository_owner }}/webtest:${SHA}-amd64" \
+            "ghcr.io/${{ github.repository_owner }}/webtest:${SHA}-arm64"
