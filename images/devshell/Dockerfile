@@ -11,13 +11,11 @@ ENV DEBIAN_FRONTEND=noninteractive \
     TERM=xterm-256color \
     LANG=en_US.UTF-8 \
     LC_ALL=en_US.UTF-8 \
-    VIRTUAL_ENV=/opt/pyvenv \
-    PATH="/opt/pyvenv/bin:${PATH}" \
     PLAYWRIGHT_BROWSERS_PATH=/home/${USERNAME}/.cache/ms-playwright
 
 # System packages
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3 python3-pip python3-venv build-essential golang \
+    python3 build-essential golang \
     zsh wget curl git vim ca-certificates locales tzdata \
     fontconfig sudo openssh-server \
     supervisor postgresql-client xz-utils \
@@ -29,20 +27,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean \
     && mkdir -p /var/log/supervisor
 
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
 # Create user
 RUN useradd -m -s /usr/bin/zsh ${USERNAME} \
     && echo "${USERNAME}:${USER_PASSWORD}" | chpasswd \
     && usermod -aG sudo ${USERNAME} \
     && echo "${USERNAME} ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
-RUN mkdir -p /opt/pyvenv && chown ${USERNAME}:${USERNAME} /opt/pyvenv
-
 USER ${USERNAME}
 WORKDIR /home/${USERNAME}
-
-# Python venv
-RUN python3 -m venv /opt/pyvenv \
-    && pip install --no-cache-dir --upgrade pip setuptools wheel
 
 # Oh My Zsh + plugins
 RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended \
@@ -56,7 +51,6 @@ RUN echo 'export ZSH="$HOME/.oh-my-zsh"' > ~/.zshrc \
     && echo 'plugins=(git zsh-autosuggestions fast-syntax-highlighting)' >> ~/.zshrc \
     && echo 'source $ZSH/oh-my-zsh.sh' >> ~/.zshrc \
     && echo '[[ -f ~/.p10k.zsh ]] && source ~/.p10k.zsh' >> ~/.zshrc \
-    && echo 'source /opt/pyvenv/bin/activate' >> ~/.zshrc \
     && echo 'alias ll="ls -alF"' >> ~/.zshrc \
     && echo 'alias la="ls -A"' >> ~/.zshrc \
     && echo 'alias l="ls -CF"' >> ~/.zshrc \
@@ -72,7 +66,7 @@ RUN mkdir -p ~/.jupyter \
     && echo "c.ServerApp.open_browser = False" >> ~/.jupyter/jupyter_server_config.py
 
 # Python packages (Jupyter + scrapling)
-RUN pip install --no-cache-dir ipykernel jupyterlab "scrapling[all]" \
+RUN uv pip install --system ipykernel jupyterlab "scrapling[all]" \
     && python3 -m ipykernel install --user --name python3 --display-name "Python 3"
 
 # code-server
