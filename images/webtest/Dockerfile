@@ -1,24 +1,35 @@
-FROM ghcr.io/neuralj/devshell:latest
+FROM mcr.microsoft.com/playwright:v1.52.0-jammy
 
 LABEL maintainer="travis"
-LABEL description="devshell + Playwright + Visual regression testing"
+LABEL description="Playwright + pixelmatch + ImageMagick — Visual regression & E2E testing"
 
 ARG PLAYWRIGHT_VERSION=1.52.0
+ARG PIXELMATCH_VERSION=5.3.0
+ARG PNGS_VERSION=7.0.0
 
-USER root
-
+# ── System tools (ImageMagick for diff images, CJK fonts for rendering) ──
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    nodejs npm imagemagick \
-    fonts-noto-cjk fonts-liberation fonts-noto-color-emoji \
-    libasound2t64 libatk-bridge2.0-0 libatk1.0-0 libcups2 \
-    libdrm2 libgbm1 libgtk-3-0 libnspr4 libnss3 \
-    libxcomposite1 libxdamage1 libxrandr2 xdg-utils \
+    imagemagick \
+    fonts-noto-cjk fonts-noto-color-emoji \
     && rm -rf /var/lib/apt/lists/*
 
-RUN npm install -g --force @playwright/test@${PLAYWRIGHT_VERSION} pixelmatch pngjs \
+# ── Node.js test tools ──
+# @playwright/test matches the pre-installed browser version
+# pixelmatch: pixel-level image comparison
+# pngjs: PNG encode/decode (companion to pixelmatch)
+RUN npm install -g \
+    @playwright/test@${PLAYWRIGHT_VERSION} \
+    pixelmatch@${PIXELMATCH_VERSION} \
+    pngjs@${PNGS_VERSION} \
     && npm cache clean --force
 
-USER travis
+# ── Environment ──
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+ENV NODE_PATH=/usr/local/lib/node_modules
 
-ENV PLAYWRIGHT_BROWSERS_PATH=/home/travis/.cache/ms-playwright
-RUN npx playwright install chromium
+WORKDIR /tests
+
+# ── Non-root user for test execution ──
+RUN useradd --create-home --shell /bin/bash pwuser \
+    && chown -R pwuser:pwuser /tests /ms-playwright
+USER pwuser

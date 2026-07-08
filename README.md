@@ -27,13 +27,16 @@ Single fat container containing:
 
 ### WebTest Image
 
-DevShell + visual regression testing tools:
-- Playwright (Chromium)
-- pixelmatch (image comparison)
-- pngjs (PNG manipulation)
-- ImageMagick (image processing)
+Official Playwright image with visual regression testing tools:
+- Chromium, Firefox, WebKit pre-installed
+- `@playwright/test` — Playwright test framework
+- pixelmatch — Pixel-level image comparison
+- pngjs — PNG encode/decode
+- ImageMagick — Image processing
 
-**Image**: `ghcr.io/xtin59s/webtest:latest`
+**Image**: `ghcr.io/neuralj/webtest:latest`
+
+> The `e2etest` image has been merged into `webtest`.
 
 ## Usage
 
