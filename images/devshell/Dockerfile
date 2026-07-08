@@ -66,11 +66,13 @@ RUN mkdir -p ~/.jupyter \
     && echo "c.ServerApp.open_browser = False" >> ~/.jupyter/jupyter_server_config.py
 
 # Python packages (Jupyter + scrapling)
+USER root
 RUN uv pip install --system --break-system-packages ipykernel jupyterlab "scrapling[all]" \
-    && python3 -m ipykernel install --user --name python3 --display-name "Python 3"
+    && python3 -m ipykernel install --system --name python3 --display-name "Python 3"
+
+USER ${USERNAME}
 
 # code-server
-USER root
 RUN curl -fsSL https://code-server.dev/install.sh | sh
 
 USER ${USERNAME}
