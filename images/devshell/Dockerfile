@@ -81,6 +81,67 @@ RUN curl -fsSL https://code-server.dev/install.sh | sh
 
 USER ${USERNAME}
 
+# code-server extensions
+RUN for ext in \
+        "bungcip.better-toml" \
+        "charliermarsh.ruff" \
+        "eamodio.gitlens" \
+        "editorconfig.editorconfig" \
+        "ms-python.black-formatter" \
+        "ms-toolsai.jupyter-keymap" \
+        "ms-toolsai.jupyter" \
+        "oderwat.indent-rainbow" \
+        "redhat.vscode-yaml" \
+        "usernamehw.errorlens" \
+        "vscodevim.vim"; do \
+        code-server --install-extension "$ext" || true; \
+    done
+
+# code-server settings
+RUN mkdir -p ~/.local/share/code-server/User \
+    && echo '{' > ~/.local/share/code-server/User/settings.json \
+    && echo '  "editor.fontFamily": "'\''Fira Code'\'', '\''JetBrains Mono'\'', '\''MesloLGS NF'\'', Consolas, '\''Courier New'\'', monospace",' >> ~/.local/share/code-server/User/settings.json \
+    && echo '  "editor.fontSize": 14,' >> ~/.local/share/code-server/User/settings.json \
+    && echo '  "editor.lineHeight": 1.6,' >> ~/.local/share/code-server/User/settings.json \
+    && echo '  "editor.fontWeight": "400",' >> ~/.local/share/code-server/User/settings.json \
+    && echo '  "editor.fontLigatures": true,' >> ~/.local/share/code-server/User/settings.json \
+    && echo '  "editor.letterSpacing": 0.2,' >> ~/.local/share/code-server/User/settings.json \
+    && echo '  "editor.fontSmoothing": "antialiased",' >> ~/.local/share/code-server/User/settings.json \
+    && echo '  "terminal.integrated.fontFamily": "'\''MesloLGS NF'\'', '\''Fira Code'\'', '\''JetBrains Mono'\'', monospace",' >> ~/.local/share/code-server/User/settings.json \
+    && echo '  "terminal.integrated.fontSize": 14,' >> ~/.local/share/code-server/User/settings.json \
+    && echo '  "terminal.integrated.lineHeight": 1.5,' >> ~/.local/share/code-server/User/settings.json \
+    && echo '  "editor.wordWrapColumn": 120,' >> ~/.local/share/code-server/User/settings.json \
+    && echo '  "editor.smoothScrolling": true,' >> ~/.local/share/code-server/User/settings.json \
+    && echo '  "editor.codeActionsOnSave": {},' >> ~/.local/share/code-server/User/settings.json \
+    && echo '  "telemetry.telemetryLevel": "off",' >> ~/.local/share/code-server/User/settings.json \
+    && echo '  "telemetry.enableTelemetry": false,' >> ~/.local/share/code-server/User/settings.json \
+    && echo '  "telemetry.enableCrashReporter": false,' >> ~/.local/share/code-server/User/settings.json \
+    && echo '  "telemetry.feedback.enabled": false,' >> ~/.local/share/code-server/User/settings.json \
+    && echo '  "chat.disableAIFeatures": true,' >> ~/.local/share/code-server/User/settings.json \
+    && echo '  "workbench.secondarySideBar.enabled": false,' >> ~/.local/share/code-server/User/settings.json \
+    && echo '  "workbench.secondarySideBar.defaultVisibility": "hidden",' >> ~/.local/share/code-server/User/settings.json \
+    && echo '  "github.copilot.enabled": false,' >> ~/.local/share/code-server/User/settings.json \
+    && echo '  "chat.enabled": false,' >> ~/.local/share/code-server/User/settings.json \
+    && echo '  "workbench.chat.enabled": false,' >> ~/.local/share/code-server/User/settings.json \
+    && echo '  "ai.enableCodeLens": false,' >> ~/.local/share/code-server/User/settings.json \
+    && echo '  "ai.enableInlineCompletions": false,' >> ~/.local/share/code-server/User/settings.json \
+    && echo '  "workbench.settings.enableNaturalLanguageSearch": false,' >> ~/.local/share/code-server/User/settings.json \
+    && echo '  "settingsSync.enabled": false,' >> ~/.local/share/code-server/User/settings.json \
+    && echo '  "settingsSync.keybindingsPerPlatform": false,' >> ~/.local/share/code-server/User/settings.json \
+    && echo '  "settingsSync.ignoredSettings": [],' >> ~/.local/share/code-server/User/settings.json \
+    && echo '  "extensions.showRecommendations": false,' >> ~/.local/share/code-server/User/settings.json \
+    && echo '  "extensions.ignoreRecommendations": true,' >> ~/.local/share/code-server/User/settings.json \
+    && echo '  "update.showReleaseNotes": false,' >> ~/.local/share/code-server/User/settings.json \
+    && echo '  "workbench.startupEditor": "none",' >> ~/.local/share/code-server/User/settings.json \
+    && echo '  "search.exclude": {' >> ~/.local/share/code-server/User/settings.json \
+    && echo '    "**/node_modules": true,' >> ~/.local/share/code-server/User/settings.json \
+    && echo '    "**/.git": true' >> ~/.local/share/code-server/User/settings.json \
+    && echo '  },' >> ~/.local/share/code-server/User/settings.json \
+    && echo '  "files.autoSave": "off",' >> ~/.local/share/code-server/User/settings.json \
+    && echo '  "network.trace": "off",' >> ~/.local/share/code-server/User/settings.json \
+    && echo '  "workbench.colorTheme": "Visual Studio Dark"' >> ~/.local/share/code-server/User/settings.json \
+    && echo '}' >> ~/.local/share/code-server/User/settings.json
+
 # Playwright browsers
 RUN playwright install --with-deps chromium
 
