@@ -17,3 +17,4 @@ RUN npm install -g --force @playwright/test@${PLAYWRIGHT_VERSION} \
 USER travis
 
 ENV PLAYWRIGHT_BROWSERS_PATH=/home/travis/.cache/ms-playwright
+RUN npx playwright install chromium
