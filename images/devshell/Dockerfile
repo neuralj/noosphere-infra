@@ -68,7 +68,7 @@ RUN mkdir -p ~/.jupyter \
 # Python packages (Jupyter + scrapling)
 USER root
 RUN uv pip install --system --break-system-packages ipykernel jupyterlab "scrapling[all]" \
-    && python3 -m ipykernel install --system --name python3 --display-name "Python 3"
+    && python3 -m ipykernel install --prefix /usr/local --name python3 --display-name "Python 3"
 
 USER ${USERNAME}
 
