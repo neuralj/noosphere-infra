@@ -30,7 +30,7 @@ services:
       - noosphere-net
 
   postgres:
-    image: postgres:17
+    image: ghcr.io/neuralj/postgres:17
     container_name: noosphere-postgres
     restart: unless-stopped
     ports:
