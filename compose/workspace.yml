@@ -1,0 +1,61 @@
+services:
+  workspace:
+    image: ghcr.io/xtin59s/base:latest
+    container_name: noosphere-workspace
+    restart: unless-stopped
+    ports:
+      - "8022:22"
+      - "8080:8080"
+      - "8096:4096"
+      - "8088:8888"
+    volumes:
+      - /noosphere:/noosphere:rw
+      - /home/travis/noosphere_space/noosphere:/home/travis/repos:rw
+      - /home/travis/.ssh:/home/travis/.ssh:rw
+    environment:
+      - TZ=Asia/Shanghai
+      - NOOS_DATA=/noosphere
+    extra_hosts:
+      - "host.local:host-gateway"
+    healthcheck:
+      test: ["CMD", "pgrep", "-x", "supervisord"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - noosphere-net
+
+  postgres:
+    image: postgres:17
+    container_name: noosphere-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      - TZ=Asia/Shanghai
+      - POSTGRES_PASSWORD=bad
+      - POSTGRES_DB=meta
+    volumes:
+      - /noosphere/metadata/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d meta"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - noosphere-net
+
+networks:
+  noosphere-net:
+    name: noosphere-net
