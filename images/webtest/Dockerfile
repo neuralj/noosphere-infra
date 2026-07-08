@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxcomposite1 libxdamage1 libxrandr2 xdg-utils \
     && rm -rf /var/lib/apt/lists/*
 
-RUN npm install -g @playwright/test@${PLAYWRIGHT_VERSION} pixelmatch pngjs \
+RUN npm install -g --force @playwright/test@${PLAYWRIGHT_VERSION} pixelmatch pngjs \
     && npm cache clean --force
 
 USER travis
