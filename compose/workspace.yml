@@ -1,6 +1,6 @@
 services:
   workspace:
-    image: ghcr.io/xtin59s/base:latest
+    image: ghcr.io/xtin59s/devshell:latest
     container_name: noosphere-workspace
     restart: unless-stopped
     ports:

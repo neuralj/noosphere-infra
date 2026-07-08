@@ -55,6 +55,7 @@ RUN echo 'export ZSH="$HOME/.oh-my-zsh"' > ~/.zshrc \
     && echo 'ZSH_THEME="powerlevel10k/powerlevel10k"' >> ~/.zshrc \
     && echo 'plugins=(git zsh-autosuggestions fast-syntax-highlighting)' >> ~/.zshrc \
     && echo 'source $ZSH/oh-my-zsh.sh' >> ~/.zshrc \
+    && echo '[[ -f ~/.p10k.zsh ]] && source ~/.p10k.zsh' >> ~/.zshrc \
     && echo 'source /opt/pyvenv/bin/activate' >> ~/.zshrc \
     && echo 'alias ll="ls -alF"' >> ~/.zshrc \
     && echo 'alias la="ls -A"' >> ~/.zshrc \
