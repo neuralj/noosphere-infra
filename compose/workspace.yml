@@ -1,6 +1,6 @@
 services:
   workspace:
-    image: ghcr.io/xtin59s/devshell:latest
+    image: ghcr.io/neuralj/devshell:latest
     container_name: noosphere-workspace
     restart: unless-stopped
     ports:
@@ -30,7 +30,7 @@ services:
       - noosphere-net
 
   postgres:
-    image: ghcr.io/xtin59s/postgres:17
+    image: postgres:17
     container_name: noosphere-postgres
     restart: unless-stopped
     ports:
