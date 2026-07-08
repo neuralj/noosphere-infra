@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'infra/images/**'
+      - 'images/**'
       - '.github/workflows/build.yml'
   workflow_dispatch:
 
@@ -44,7 +44,7 @@ jobs:
       - name: Build and push base (${{ matrix.arch }})
         uses: docker/build-push-action@v5
         with:
-          context: ./infra/images/base
+          context: ./images/base
           platforms: ${{ matrix.platform }}
           push: true
           tags: |
