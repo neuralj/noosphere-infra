@@ -11,6 +11,7 @@ services:
       - ${NOOS_DATA}:/noosphere:rw
       - ${NOOS_REPO}:/home/travis/repos:rw
       - ${NOOS_HOME}/.ssh:/home/travis/.ssh:rw
+      - /srv:/srv:ro
     environment:
       - TZ=Asia/Shanghai
       - NOOS_DATA=/noosphere
