@@ -17,6 +17,6 @@ RUN apt-get update && \
 RUN python3 -m pip install -U 'mineru[core]>=3.4.0' --break-system-packages && \
     python3 -m pip cache purge
 
-RUN mineru-models-download -s huggingface -m all
+RUN mineru-models-download -s modelscope -m all
 
 ENV MINERU_MODEL_SOURCE=local
