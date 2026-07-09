@@ -8,10 +8,11 @@ Single CI workflow (`build.yml`) triggers on `images/**`, `.github/workflows/**`
 - `images/postgres` — `FROM postgres:17` with `TZ=Asia/Shanghai`
 - `images/webtest` — `FROM mcr.microsoft.com/playwright:v1.52.0-jammy` with Chromium/Firefox/WebKit pre-installed, plus pixelmatch + pngjs + ImageMagick for visual regression & E2E testing
 - `images/ollama` — `FROM ollama/ollama:0.23.2` with `TZ=Asia/Shanghai`, NVIDIA GPU support
+- `images/mineru` — `FROM vllm/vllm-openai:v0.21.0` with MinerU PDF parsing engine, VLM + OCR, NVIDIA GPU required
 
 ## Registry
 
-`ghcr.io/neuralj/{devshell,postgres:17,webtest,ollama}:latest` (also tagged with SHA)
+`ghcr.io/neuralj/{devshell,postgres:17,webtest,ollama,mineru}:latest` (also tagged with SHA)
 
 ## Manual trigger
 
