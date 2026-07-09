@@ -25,7 +25,7 @@ RUN npm install -g \
 
 # ── Environment ──
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
-ENV NODE_PATH=/usr/local/lib/node_modules
+ENV NODE_PATH=/usr/lib/node_modules
 
 WORKDIR /tests
 
