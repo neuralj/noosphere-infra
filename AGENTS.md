@@ -7,17 +7,11 @@ Single CI workflow (`build.yml`) triggers on `images/**`, `.github/workflows/**`
 - `images/devshell` — fat container: Python 3.12 + Go + SSH + zsh/Oh My Zsh/Powerlevel10k + code-server + opencode + Jupyter + scrapling + Playwright + supervisord
 - `images/postgres` — `FROM postgres:17` with `TZ=Asia/Shanghai`
 - `images/webtest` — `FROM mcr.microsoft.com/playwright:v1.52.0-jammy` with Chromium/Firefox/WebKit pre-installed, plus pixelmatch + pngjs + ImageMagick for visual regression & E2E testing
+- `images/ollama` — `FROM ollama/ollama:0.23.2` with `TZ=Asia/Shanghai`, NVIDIA GPU support
 
 ## Registry
 
-`ghcr.io/neuralj/{devshell,postgres:17,webtest}:latest` (also tagged with SHA)
-
-## Compose (`compose/workspace.yml`)
-
-- `noosphere-workspace` — uses `ghcr.io/xtin59s/devshell:latest`, ports 8022/8080/8088
-- `noosphere-postgres` — uses `ghcr.io/xtin59s/postgres:17`, port 5432, password `bad`, db `meta`
-- Mounts `/noosphere` (data) and `/home/travis/noosphere_space/noosphere` (code)
-- `TZ=Asia/Shanghai`
+`ghcr.io/neuralj/{devshell,postgres:17,webtest,ollama}:latest` (also tagged with SHA)
 
 ## Manual trigger
 
