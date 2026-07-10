@@ -11,7 +11,8 @@ ENV DEBIAN_FRONTEND=noninteractive \
     TERM=xterm-256color \
     LANG=en_US.UTF-8 \
     LC_ALL=en_US.UTF-8 \
-    PLAYWRIGHT_BROWSERS_PATH=/home/${USERNAME}/.cache/ms-playwright
+    PLAYWRIGHT_BROWSERS_PATH=/home/${USERNAME}/.cache/ms-playwright \
+    UMASK=002
 
 # System packages
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -30,11 +31,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Install uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
-# Create user
+# Create user and shared group
 RUN useradd -m -s /usr/bin/zsh ${USERNAME} \
     && echo "${USERNAME}:${USER_PASSWORD}" | chpasswd \
     && usermod -aG sudo ${USERNAME} \
-    && echo "${USERNAME} ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+    && echo "${USERNAME} ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers \
+    && groupadd noosphere \
+    && usermod -aG noosphere ${USERNAME}
 
 USER ${USERNAME}
 WORKDIR /home/${USERNAME}
@@ -150,6 +153,10 @@ RUN mkdir -p /var/run/sshd \
 # supervisord config
 COPY files/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
+# Entrypoint script for permission management
+COPY files/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
 EXPOSE 22 8080 8888
 
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
