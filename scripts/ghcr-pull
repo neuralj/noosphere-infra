@@ -4,34 +4,84 @@ set -e
 MIRROR="${GHCR_MIRROR:-ghcr.nju.edu.cn}"
 
 usage() {
-    echo "Usage: ghcr-pull <ghcr.io/org/image:tag> [mirror]"
+    echo "Usage: ghcr-pull <ghcr.io/org/image:tag>"
     echo ""
-    echo "Pull ghcr.io images via mirror, then re-tag to original name."
+    echo "Pull ghcr.io images via mirror, verify integrity, re-tag to original name."
     echo ""
-    echo "Mirrors (2026-07 verified):"
-    echo "  ghcr.nju.edu.cn       ✅ Available (default)"
-    echo "  ghcr.m.daocloud.io    ❌ 403 Forbidden"
-    echo "  ghcr.dockerproxy.com  ❌ Dead"
+    echo "Flow:"
+    echo "  1. Query GHCR for source digest"
+    echo "  2. Pull from mirror ($MIRROR)"
+    echo "  3. Re-tag to ghcr.io name"
+    echo "  4. Verify local digest matches GHCR"
+    echo "  5. Clean up mirror-prefixed image"
     echo ""
-    echo "Override mirror: GHCR_MIRROR=xxx ./ghcr-pull <image>"
+    echo "Override mirror: GHCR_MIRROR=xxx ghcr-pull <image>"
     exit 1
 }
 
 [ -z "$1" ] && usage
 
 IMAGE="$1"
-[ -n "$2" ] && MIRROR="$2"
 
 if [[ "$IMAGE" != ghcr.io/* ]]; then
     echo "Not a ghcr.io image, pulling directly: $IMAGE"
     exec docker pull "$IMAGE"
 fi
 
-MIRROR_IMAGE="${IMAGE/ghcr.io/$MIRROR}"
+# Parse: ghcr.io/org/name:tag → org/name, tag
+REPO="${IMAGE#ghcr.io/}"
+REPO="${REPO%:*}"
+TAG="${IMAGE##*:}"
+[ "$TAG" = "$REPO" ] && TAG="latest"
 
-echo "==> Pulling via mirror: $MIRROR_IMAGE"
+echo "==> [1/5] Querying GHCR source digest..."
+TOKEN=$(curl -sf "https://ghcr.io/token?scope=repository:$REPO:pull" | jq -r .token 2>/dev/null)
+if [ -z "$TOKEN" ] || [ "$TOKEN" = "null" ]; then
+    echo "    ⚠️  Could not get GHCR token, skipping verification"
+    GHCR_DIGEST=""
+else
+    GHCR_DIGEST=$(curl -sfI "https://ghcr.io/v2/$REPO/manifests/$TAG" \
+        -H "Authorization: Bearer $TOKEN" \
+        -H 'Accept: application/vnd.oci.image.index.v1+json' | \
+        grep -i 'docker-content-digest' | awk '{print $2}' | tr -d '\r\n')
+    if [ -n "$GHCR_DIGEST" ]; then
+        echo "    GHCR digest: $GHCR_DIGEST"
+    else
+        echo "    ⚠️  Could not query GHCR digest"
+    fi
+fi
+
+echo "==> [2/5] Pulling via mirror: $MIRROR/$REPO:$TAG"
+MIRROR_IMAGE="$MIRROR/$REPO:$TAG"
 docker pull "$MIRROR_IMAGE"
 
-echo "==> Tagging: $IMAGE"
+echo "==> [3/5] Re-tagging to: $IMAGE"
 docker tag "$MIRROR_IMAGE" "$IMAGE"
-echo "==> Done: $IMAGE"
+
+echo "==> [4/5] Verifying integrity..."
+LOCAL_DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' "$IMAGE" 2>/dev/null | cut -d@ -f2)
+if [ -z "$LOCAL_DIGEST" ]; then
+    LOCAL_DIGEST=$(docker inspect --format='{{.Id}}' "$IMAGE" 2>/dev/null)
+fi
+
+if [ -n "$GHCR_DIGEST" ]; then
+    if [ "$LOCAL_DIGEST" = "$GHCR_DIGEST" ] || [[ "$LOCAL_DIGEST" == *"${GHCR_DIGEST#sha256:}"* ]]; then
+        echo "    ✅ Verified: $GHCR_DIGEST"
+    else
+        echo "    ⚠️  Digest mismatch!"
+        echo "    GHCR:  $GHCR_DIGEST"
+        echo "    Local: $LOCAL_DIGEST"
+        echo "    The mirror may have modified the image."
+        exit 1
+    fi
+else
+    echo "    ⚠️  Skipped (no GHCR digest to compare)"
+    echo "    Local digest: $LOCAL_DIGEST"
+fi
+
+echo "==> [5/5] Cleaning up mirror image..."
+docker rmi "$MIRROR_IMAGE" >/dev/null 2>&1 || true
+
+echo ""
+echo "✅ $IMAGE"
+echo "   Digest: $LOCAL_DIGEST"

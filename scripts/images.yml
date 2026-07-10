@@ -1,0 +1,10 @@
+registry: ghcr.io/neuralj
+mirror: ghcr.nju.edu.cn
+
+images:
+  devshell:  { tag: latest }
+  postgres:  { tag: "17" }
+  webtest:   { tag: latest }
+  ollama:    { tag: latest }
+  mineru:    { tag: latest }
+  mongodb:   { tag: latest }

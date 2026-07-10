@@ -19,46 +19,54 @@ Single CI workflow (`build.yml`) triggers on `images/**`, `.github/workflows/**`
 
 Uses `dorny/paths-filter` to detect which images changed. Only changed images are built (plus all images when workflow file changes or `workflow_dispatch` is triggered).
 
-## Pulling Images (China Network)
+## Pulling Images
 
-All GHCR packages are **public**. On machines with poor connectivity to `pkg-containers.githubusercontent.com`, use the NJU mirror:
+All GHCR packages are **public**. The canonical image name is always `ghcr.io/neuralj/<name>:<tag>`.
 
-### Docker Hub 镜像
-
-通过 `registry-mirrors` 自动加速（配置在 `/etc/docker/daemon.json`）：
+### Quick Start
 
 ```bash
-docker pull ubuntu:24.04  # 自动走镜像加速
+# Pull all images
+./scripts/pull-all
+
+# Pull single image
+./scripts/ghcr-pull ghcr.io/neuralj/devshell:latest
 ```
 
-### ghcr.io 镜像
+### How it works
 
-`registry-mirrors` 对 ghcr.io 无效，需要用 `ghcr-pull` 脚本：
+`scripts/ghcr-pull` performs these steps:
 
-```bash
-# 直接拉取（慢/不稳定）
-docker pull ghcr.io/neuralj/postgres:17
+1. **Query GHCR** for source digest (source of truth)
+2. **Pull from mirror** (`ghcr.nju.edu.cn` by default)
+3. **Re-tag** to `ghcr.io/neuralj/<name>:<tag>`
+4. **Verify** local digest matches GHCR digest
+5. **Clean up** mirror-prefixed image
 
-# 通过脚本拉取（快）
-./scripts/ghcr-pull ghcr.io/neuralj/postgres:17
+If verification fails, the script exits with error.
+
+### Image Registry
+
+`scripts/images.yml` defines all available images:
+
+```yaml
+registry: ghcr.io/neuralj
+mirror: ghcr.nju.edu.cn
+
+images:
+  devshell:  { tag: latest }
+  postgres:  { tag: "17" }
+  webtest:   { tag: latest }
+  ollama:    { tag: latest }
+  mineru:    { tag: latest }
+  mongodb:   { tag: latest }
 ```
 
-### ghcr-pull helper script
+### China Network Notes
 
-Repo includes `scripts/ghcr-pull` — pulls via mirror and re-tags to original name:
-
-```bash
-./scripts/ghcr-pull ghcr.io/neuralj/webtest:latest
-# → pulls from ghcr.nju.edu.cn, re-tags to ghcr.io
-
-# Override mirror
-GHCR_MIRROR=ghcr.nju.edu.cn ./scripts/ghcr-pull ghcr.io/neuralj/devshell:latest
-```
-
-Install globally (optional):
-```bash
-cp scripts/ghcr-pull ~/.local/bin/
-```
+- `registry-mirrors` in `daemon.json` only works for Docker Hub, NOT ghcr.io
+- For ghcr.io, use `ghcr-pull` which goes through NJU mirror
+- Direct `docker pull ghcr.io/...` may hang due to packet loss to `pkg-containers.githubusercontent.com`
 
 ### Verified mirrors (2026-07)
 

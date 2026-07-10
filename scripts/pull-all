@@ -1,0 +1,60 @@
+#!/bin/bash
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+IMAGES_FILE="$SCRIPT_DIR/images.yml"
+GHCR_PULL="$SCRIPT_DIR/ghcr-pull"
+
+if [ ! -f "$IMAGES_FILE" ]; then
+    echo "Error: $IMAGES_FILE not found"
+    exit 1
+fi
+
+if [ ! -x "$GHCR_PULL" ]; then
+    echo "Error: $GHCR_PULL not found or not executable"
+    exit 1
+fi
+
+# Parse images.yml
+REGISTRY=$(grep '^registry:' "$IMAGES_FILE" | awk '{print $2}')
+if [ -z "$REGISTRY" ]; then
+    echo "Error: registry not defined in $IMAGES_FILE"
+    exit 1
+fi
+
+echo "Pulling all images from $REGISTRY"
+echo "================================"
+echo ""
+
+TOTAL=0
+SUCCESS=0
+FAILED=0
+
+# Read images section
+while IFS= read -r line; do
+    # Match lines like: "  devshell:  { tag: latest }"
+    if [[ "$line" =~ ^[[:space:]]+([a-zA-Z0-9_-]+):[[:space:]]*\{[[:space:]]*tag:[[:space:]]*\"?([^\"[:space:]]+)\"?[[:space:]]*\} ]]; then
+        NAME="${BASH_REMATCH[1]}"
+        TAG="${BASH_REMATCH[2]}"
+        IMAGE="$REGISTRY/$NAME:$TAG"
+        
+        TOTAL=$((TOTAL + 1))
+        echo "[$TOTAL] $IMAGE"
+        echo "---"
+        
+        if "$GHCR_PULL" "$IMAGE"; then
+            SUCCESS=$((SUCCESS + 1))
+        else
+            FAILED=$((FAILED + 1))
+            echo "    ❌ Failed to pull $IMAGE"
+        fi
+        echo ""
+    fi
+done < <(sed -n '/^images:/,/^[a-z]/p' "$IMAGES_FILE")
+
+echo "================================"
+echo "Summary: $SUCCESS/$TOTAL pulled and verified"
+if [ $FAILED -gt 0 ]; then
+    echo "         $FAILED failed"
+    exit 1
+fi
