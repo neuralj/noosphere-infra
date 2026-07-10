@@ -25,10 +25,12 @@ RUN npm install -g \
 
 # ── Environment ──
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
-ENV NODE_PATH=/usr/lib/node_modules
 
 WORKDIR /tests
 
 # ── Use existing pwuser from base image ──
 RUN chown -R pwuser:pwuser /tests /ms-playwright
 USER pwuser
+
+# NODE_PATH must be AFTER USER directive (base image may override ENV in later layers)
+ENV NODE_PATH=/usr/lib/node_modules

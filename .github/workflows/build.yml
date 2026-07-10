@@ -12,10 +12,44 @@ env:
   CI: true
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      images: ${{ steps.filter.outputs.changes }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            devshell:
+              - 'images/devshell/**'
+              - '.github/workflows/build.yml'
+            postgres:
+              - 'images/postgres/**'
+              - '.github/workflows/build.yml'
+            webtest:
+              - 'images/webtest/**'
+              - '.github/workflows/build.yml'
+            ollama:
+              - 'images/ollama/**'
+              - '.github/workflows/build.yml'
+            mineru:
+              - 'images/mineru/**'
+              - '.github/workflows/build.yml'
+            mongodb:
+              - 'images/mongodb/**'
+              - '.github/workflows/build.yml'
+
   build:
+    needs: changes
+    if: ${{ needs.changes.outputs.images != '[]' && needs.changes.outputs.images != '' }}
     strategy:
       fail-fast: false
       matrix:
+        image: ${{ fromJSON(needs.changes.outputs.images) }}
         include:
           - runner: ubuntu-latest
             platform: linux/amd64
@@ -41,68 +75,20 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build and push devshell (${{ matrix.arch }})
+      - name: Build and push ${{ matrix.image }} (${{ matrix.arch }})
         uses: docker/build-push-action@v5
         with:
-          context: ./images/devshell
+          context: ./images/${{ matrix.image }}
           platforms: ${{ matrix.platform }}
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/devshell:latest-${{ matrix.arch }}
-            ghcr.io/${{ github.repository_owner }}/devshell:${{ github.sha }}-${{ matrix.arch }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Build and push postgres (${{ matrix.arch }})
-        uses: docker/build-push-action@v5
-        with:
-          context: ./images/postgres
-          platforms: ${{ matrix.platform }}
-          push: true
-          tags: |
-            ghcr.io/${{ github.repository_owner }}/postgres:17-${{ matrix.arch }}
-            ghcr.io/${{ github.repository_owner }}/postgres:17-${{ github.sha }}-${{ matrix.arch }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Build and push webtest (${{ matrix.arch }})
-        uses: docker/build-push-action@v5
-        with:
-          context: ./images/webtest
-          platforms: ${{ matrix.platform }}
-          push: true
-          tags: |
-            ghcr.io/${{ github.repository_owner }}/webtest:latest-${{ matrix.arch }}
-            ghcr.io/${{ github.repository_owner }}/webtest:${{ github.sha }}-${{ matrix.arch }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Build and push ollama (${{ matrix.arch }})
-        uses: docker/build-push-action@v5
-        with:
-          context: ./images/ollama
-          platforms: ${{ matrix.platform }}
-          push: true
-          tags: |
-            ghcr.io/${{ github.repository_owner }}/ollama:latest-${{ matrix.arch }}
-            ghcr.io/${{ github.repository_owner }}/ollama:${{ github.sha }}-${{ matrix.arch }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Build and push mineru (${{ matrix.arch }})
-        uses: docker/build-push-action@v5
-        with:
-          context: ./images/mineru
-          platforms: ${{ matrix.platform }}
-          push: true
-          tags: |
-            ghcr.io/${{ github.repository_owner }}/mineru:latest-${{ matrix.arch }}
-            ghcr.io/${{ github.repository_owner }}/mineru:${{ github.sha }}-${{ matrix.arch }}
+            ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}:latest-${{ matrix.arch }}
+            ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}:${{ github.sha }}-${{ matrix.arch }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
   merge-manifests:
-    needs: build
+    needs: [build, changes]
     runs-on: ubuntu-latest
     permissions:
       packages: write
@@ -118,53 +104,21 @@ jobs:
         run: |
           SHA="${{ github.sha }}"
           SHA_SHORT="${SHA:0:7}"
-          
-          docker buildx imagetools create -t \
-            "ghcr.io/${{ github.repository_owner }}/devshell:latest" \
-            "ghcr.io/${{ github.repository_owner }}/devshell:latest-amd64" \
-            "ghcr.io/${{ github.repository_owner }}/devshell:latest-arm64"
-          
-          docker buildx imagetools create -t \
-            "ghcr.io/${{ github.repository_owner }}/devshell:${SHA_SHORT}" \
-            "ghcr.io/${{ github.repository_owner }}/devshell:${SHA}-amd64" \
-            "ghcr.io/${{ github.repository_owner }}/devshell:${SHA}-arm64"
-          
-          docker buildx imagetools create -t \
-            "ghcr.io/${{ github.repository_owner }}/postgres:17" \
-            "ghcr.io/${{ github.repository_owner }}/postgres:17-amd64" \
-            "ghcr.io/${{ github.repository_owner }}/postgres:17-arm64"
-          
-          docker buildx imagetools create -t \
-            "ghcr.io/${{ github.repository_owner }}/postgres:17-${SHA_SHORT}" \
-            "ghcr.io/${{ github.repository_owner }}/postgres:17-${SHA}-amd64" \
-            "ghcr.io/${{ github.repository_owner }}/postgres:17-${SHA}-arm64"
-          
-          docker buildx imagetools create -t \
-            "ghcr.io/${{ github.repository_owner }}/webtest:latest" \
-            "ghcr.io/${{ github.repository_owner }}/webtest:latest-amd64" \
-            "ghcr.io/${{ github.repository_owner }}/webtest:latest-arm64"
-          
-          docker buildx imagetools create -t \
-            "ghcr.io/${{ github.repository_owner }}/webtest:${SHA_SHORT}" \
-            "ghcr.io/${{ github.repository_owner }}/webtest:${SHA}-amd64" \
-            "ghcr.io/${{ github.repository_owner }}/webtest:${SHA}-arm64"
-          
-          docker buildx imagetools create -t \
-            "ghcr.io/${{ github.repository_owner }}/ollama:latest" \
-            "ghcr.io/${{ github.repository_owner }}/ollama:latest-amd64" \
-            "ghcr.io/${{ github.repository_owner }}/ollama:latest-arm64"
-          
-          docker buildx imagetools create -t \
-            "ghcr.io/${{ github.repository_owner }}/ollama:${SHA_SHORT}" \
-            "ghcr.io/${{ github.repository_owner }}/ollama:${SHA}-amd64" \
-            "ghcr.io/${{ github.repository_owner }}/ollama:${SHA}-arm64"
-          
-          docker buildx imagetools create -t \
-            "ghcr.io/${{ github.repository_owner }}/mineru:latest" \
-            "ghcr.io/${{ github.repository_owner }}/mineru:latest-amd64" \
-            "ghcr.io/${{ github.repository_owner }}/mineru:latest-arm64"
-          
-          docker buildx imagetools create -t \
-            "ghcr.io/${{ github.repository_owner }}/mineru:${SHA_SHORT}" \
-            "ghcr.io/${{ github.repository_owner }}/mineru:${SHA}-amd64" \
-            "ghcr.io/${{ github.repository_owner }}/mineru:${SHA}-arm64"
+          CHANGED='${{ needs.changes.outputs.images }}'
+
+          for img in $(echo "$CHANGED" | jq -r '.[]'); do
+            case "$img" in
+              postgres) VERSION_TAG="17" ;;
+              *) VERSION_TAG="latest" ;;
+            esac
+
+            docker buildx imagetools create -t \
+              "ghcr.io/${{ github.repository_owner }}/${img}:${VERSION_TAG}" \
+              "ghcr.io/${{ github.repository_owner }}/${img}:latest-amd64" \
+              "ghcr.io/${{ github.repository_owner }}/${img}:latest-arm64"
+
+            docker buildx imagetools create -t \
+              "ghcr.io/${{ github.repository_owner }}/${img}:${SHA_SHORT}" \
+              "ghcr.io/${{ github.repository_owner }}/${img}:${SHA}-amd64" \
+              "ghcr.io/${{ github.repository_owner }}/${img}:${SHA}-arm64"
+          done
