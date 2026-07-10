@@ -1,0 +1,37 @@
+#!/bin/bash
+set -e
+
+MIRROR="${GHCR_MIRROR:-ghcr.nju.edu.cn}"
+
+usage() {
+    echo "Usage: ghcr-pull <ghcr.io/org/image:tag> [mirror]"
+    echo ""
+    echo "Pull ghcr.io images via mirror, then re-tag to original name."
+    echo ""
+    echo "Mirrors (2026-07 verified):"
+    echo "  ghcr.nju.edu.cn       ✅ Available (default)"
+    echo "  ghcr.m.daocloud.io    ❌ 403 Forbidden"
+    echo "  ghcr.dockerproxy.com  ❌ Dead"
+    echo ""
+    echo "Override mirror: GHCR_MIRROR=xxx ./ghcr-pull <image>"
+    exit 1
+}
+
+[ -z "$1" ] && usage
+
+IMAGE="$1"
+[ -n "$2" ] && MIRROR="$2"
+
+if [[ "$IMAGE" != ghcr.io/* ]]; then
+    echo "Not a ghcr.io image, pulling directly: $IMAGE"
+    exec docker pull "$IMAGE"
+fi
+
+MIRROR_IMAGE="${IMAGE/ghcr.io/$MIRROR}"
+
+echo "==> Pulling via mirror: $MIRROR_IMAGE"
+docker pull "$MIRROR_IMAGE"
+
+echo "==> Tagging: $IMAGE"
+docker tag "$MIRROR_IMAGE" "$IMAGE"
+echo "==> Done: $IMAGE"
