@@ -23,13 +23,24 @@ Uses `dorny/paths-filter` to detect which images changed. Only changed images ar
 
 All GHCR packages are **public**. On machines with poor connectivity to `pkg-containers.githubusercontent.com`, use the NJU mirror:
 
+### Docker Hub 镜像
+
+通过 `registry-mirrors` 自动加速（配置在 `/etc/docker/daemon.json`）：
+
 ```bash
-# Direct (slow/unreliable from China)
+docker pull ubuntu:24.04  # 自动走镜像加速
+```
+
+### ghcr.io 镜像
+
+`registry-mirrors` 对 ghcr.io 无效，需要用 `ghcr-pull` 脚本：
+
+```bash
+# 直接拉取（慢/不稳定）
 docker pull ghcr.io/neuralj/postgres:17
 
-# Via NJU mirror (fast)
-docker pull ghcr.nju.edu.cn/neuralj/postgres:17
-docker tag ghcr.nju.edu.cn/neuralj/postgres:17 ghcr.io/neuralj/postgres:17
+# 通过脚本拉取（快）
+./scripts/ghcr-pull ghcr.io/neuralj/postgres:17
 ```
 
 ### ghcr-pull helper script
