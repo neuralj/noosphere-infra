@@ -68,9 +68,9 @@ RUN mkdir -p ~/.jupyter \
     && echo "c.ServerApp.port = 8888" >> ~/.jupyter/jupyter_server_config.py \
     && echo "c.ServerApp.open_browser = False" >> ~/.jupyter/jupyter_server_config.py
 
-# Python packages (Jupyter + scrapling + psycopg2)
+# Python packages (Jupyter + scrapling + psycopg2 + html conversion)
 USER root
-RUN uv pip install --system --break-system-packages ipykernel jupyterlab "scrapling[all]" psycopg2-binary \
+RUN uv pip install --system --break-system-packages ipykernel jupyterlab "scrapling[all]" psycopg2-binary beautifulsoup4 markdownify \
     && python3 -m ipykernel install --prefix /usr/local --name python3 --display-name "Python 3"
 
 USER ${USERNAME}
