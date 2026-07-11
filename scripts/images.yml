@@ -8,3 +8,4 @@ images:
   ollama:    { tag: latest }
   mineru:    { tag: latest }
   mongodb:   { tag: latest }
+  grafana:   { tag: latest }

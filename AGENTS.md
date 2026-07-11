@@ -10,10 +10,11 @@ Single CI workflow (`build.yml`) triggers on `images/**`, `.github/workflows/**`
 - `images/ollama` — `FROM ollama/ollama:0.23.2` with `TZ=Asia/Shanghai`, NVIDIA GPU support
 - `images/mineru` — `FROM vllm/vllm-openai:v0.21.0` with MinerU PDF parsing engine, VLM + OCR, NVIDIA GPU required
 - `images/mongodb` — `FROM mongo:6` with `TZ=Asia/Shanghai`
+- `images/grafana` — `FROM grafana/grafana:latest` with `TZ=Asia/Shanghai`
 
 ## Registry
 
-`ghcr.io/neuralj/{devshell,postgres:17,webtest,ollama,mineru,mongodb}:latest` (also tagged with SHA)
+`ghcr.io/neuralj/{devshell,postgres:17,webtest,ollama,mineru,mongodb,grafana}:latest` (also tagged with SHA)
 
 ## CI Optimization
 
@@ -60,6 +61,7 @@ images:
   ollama:    { tag: latest }
   mineru:    { tag: latest }
   mongodb:   { tag: latest }
+  grafana:   { tag: latest }
 ```
 
 ### China Network Notes
