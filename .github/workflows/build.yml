@@ -45,6 +45,9 @@ jobs:
             grafana:
               - 'images/grafana/**'
               - '.github/workflows/build.yml'
+            qdrant:
+              - 'images/qdrant/**'
+              - '.github/workflows/build.yml'
 
   build:
     needs: changes
