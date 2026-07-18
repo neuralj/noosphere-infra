@@ -48,6 +48,9 @@ jobs:
             qdrant:
               - 'images/qdrant/**'
               - '.github/workflows/build.yml'
+            a-bulletin:
+              - 'images/a-bulletin/**'
+              - '.github/workflows/build.yml'
 
   build:
     needs: changes
