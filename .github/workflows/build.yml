@@ -51,6 +51,9 @@ jobs:
             a-bulletin:
               - 'images/a-bulletin/**'
               - '.github/workflows/build.yml'
+            a-market:
+              - 'images/a-market/**'
+              - '.github/workflows/build.yml'
 
   build:
     needs: changes

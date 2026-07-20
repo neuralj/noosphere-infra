@@ -10,3 +10,4 @@ images:
   mongodb:   { tag: latest }
   grafana:   { tag: latest }
   qdrant:    { tag: latest }
+  a-market:  { tag: latest }
