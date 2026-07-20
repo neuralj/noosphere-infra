@@ -1,0 +1,16 @@
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: neuralj-nginx
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ${INFRA_REPO}/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ${INFRA_REPO}/nginx/conf.d:/etc/nginx/conf.d:ro
+      - /home/travis/neuralj/noosphere/ops/nginx/ssl:/etc/nginx/ssl:ro
+      - ${INFRA_REPO}/nginx/logs:/var/log/nginx
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
