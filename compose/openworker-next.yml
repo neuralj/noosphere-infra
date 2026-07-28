@@ -1,0 +1,61 @@
+services:
+  openworker-next:
+    image: ghcr.io/neuralj/openworker-next:latest
+    container_name: openworker-next
+    restart: unless-stopped
+    ports:
+      - "8765:8765"  # REST API
+      - "8766:8766"  # WebSocket
+      - "4096:4096"  # OpenCode server (if running)
+    environment:
+      - OW_STANDALONE=false
+      - OW_PORT=8765
+      - OC_PORT=4096
+      - OW_LOG_LEVEL=info
+      - TZ=Asia/Shanghai
+    volumes:
+      - openworker-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8765/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Standalone mode (for testing without OpenCode)
+  openworker-next-standalone:
+    image: ghcr.io/neuralj/openworker-next:latest
+    container_name: openworker-next-standalone
+    restart: unless-stopped
+    ports:
+      - "8775:8765"  # REST API
+      - "8776:8766"  # WebSocket
+    environment:
+      - OW_STANDALONE=true
+      - OW_PORT=8765
+      - OW_LOG_LEVEL=info
+      - TZ=Asia/Shanghai
+    volumes:
+      - openworker-standalone-data:/data
+    profiles:
+      - standalone
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8765/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  openworker-data:
+  openworker-standalone-data:

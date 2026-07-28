@@ -11,3 +11,4 @@ images:
   grafana:   { tag: latest }
   qdrant:    { tag: latest }
   a-market:  { tag: latest }
+  openworker-next: { tag: latest }

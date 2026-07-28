@@ -12,6 +12,7 @@ Single CI workflow (`build.yml`) triggers on `images/**`, `.github/workflows/**`
 - `images/mongodb` — `FROM mongo:6` with `TZ=Asia/Shanghai`
 - `images/grafana` — `FROM grafana/grafana:latest` with `TZ=Asia/Shanghai`
 - `images/qdrant` — `FROM qdrant/qdrant:v1.18.2` with `TZ=Asia/Shanghai`
+- `images/openworker-next` — `FROM node:22-bookworm-slim` with opencode CLI, TypeScript daemon for AI agent orchestration
 
 ## Registry
 

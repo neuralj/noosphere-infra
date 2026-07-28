@@ -54,6 +54,9 @@ jobs:
             a-market:
               - 'images/a-market/**'
               - '.github/workflows/build.yml'
+            openworker-next:
+              - 'images/openworker-next/**'
+              - '.github/workflows/build.yml'
 
   build:
     needs: changes
