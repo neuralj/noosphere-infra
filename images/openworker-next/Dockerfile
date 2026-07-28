@@ -9,10 +9,15 @@ ENV DEBIAN_FRONTEND=noninteractive \
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     tzdata \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /build
-COPY . /build/
+
+# Clone openworker-next source from GitHub
+ARG OPENWORKER_NEXT_REPO=https://github.com/neuralj/openworker-next.git
+ARG OPENWORKER_NEXT_BRANCH=main
+RUN git clone --depth=1 --branch=${OPENWORKER_NEXT_BRANCH} ${OPENWORKER_NEXT_REPO} .
 
 RUN npm ci && npm cache clean --force
 RUN npm run build
