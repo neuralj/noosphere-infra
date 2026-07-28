@@ -1,20 +1,20 @@
 services:
-  openworker-next:
-    image: ghcr.io/neuralj/openworker-next:latest
-    container_name: openworker-next
+  opensheeta:
+    image: ghcr.io/neuralj/opensheeta:latest
+    container_name: opensheeta
     restart: unless-stopped
     ports:
       - "8765:8765"  # REST API
       - "8766:8766"  # WebSocket
       - "4096:4096"  # OpenCode server (if running)
     environment:
-      - OW_STANDALONE=false
-      - OW_PORT=8765
+      - OS_STANDALONE=false
+      - OS_PORT=8765
       - OC_PORT=4096
-      - OW_LOG_LEVEL=info
+      - OS_LOG_LEVEL=info
       - TZ=Asia/Shanghai
     volumes:
-      - openworker-data:/data
+      - opensheeta-data:/data
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8765/health"]
       interval: 30s
@@ -28,20 +28,20 @@ services:
         max-file: "3"
 
   # Standalone mode (for testing without OpenCode)
-  openworker-next-standalone:
-    image: ghcr.io/neuralj/openworker-next:latest
-    container_name: openworker-next-standalone
+  opensheeta-standalone:
+    image: ghcr.io/neuralj/opensheeta:latest
+    container_name: opensheeta-standalone
     restart: unless-stopped
     ports:
       - "8775:8765"  # REST API
       - "8776:8766"  # WebSocket
     environment:
-      - OW_STANDALONE=true
-      - OW_PORT=8765
-      - OW_LOG_LEVEL=info
+      - OS_STANDALONE=true
+      - OS_PORT=8765
+      - OS_LOG_LEVEL=info
       - TZ=Asia/Shanghai
     volumes:
-      - openworker-standalone-data:/data
+      - opensheeta-standalone-data:/data
     profiles:
       - standalone
     healthcheck:
@@ -57,5 +57,5 @@ services:
         max-file: "3"
 
 volumes:
-  openworker-data:
-  openworker-standalone-data:
+  opensheeta-data:
+  opensheeta-standalone-data:

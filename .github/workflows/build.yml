@@ -54,8 +54,8 @@ jobs:
             a-market:
               - 'images/a-market/**'
               - '.github/workflows/build.yml'
-            openworker-next:
-              - 'images/openworker-next/**'
+            opensheeta:
+              - 'images/opensheeta/**'
               - '.github/workflows/build.yml'
 
   build:
