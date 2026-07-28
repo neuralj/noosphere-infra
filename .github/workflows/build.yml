@@ -26,37 +26,26 @@ jobs:
           filters: |
             devshell:
               - 'images/devshell/**'
-              - '.github/workflows/build.yml'
             postgres:
               - 'images/postgres/**'
-              - '.github/workflows/build.yml'
             webtest:
               - 'images/webtest/**'
-              - '.github/workflows/build.yml'
             ollama:
               - 'images/ollama/**'
-              - '.github/workflows/build.yml'
             mineru:
               - 'images/mineru/**'
-              - '.github/workflows/build.yml'
             mongodb:
               - 'images/mongodb/**'
-              - '.github/workflows/build.yml'
             grafana:
               - 'images/grafana/**'
-              - '.github/workflows/build.yml'
             qdrant:
               - 'images/qdrant/**'
-              - '.github/workflows/build.yml'
             a-bulletin:
               - 'images/a-bulletin/**'
-              - '.github/workflows/build.yml'
             a-market:
               - 'images/a-market/**'
-              - '.github/workflows/build.yml'
             opensheeta:
               - 'images/opensheeta/**'
-              - '.github/workflows/build.yml'
 
   build:
     needs: changes
