@@ -9,7 +9,7 @@
 		<string>/opt/homebrew/bin/caddy</string>
 		<string>run</string>
 		<string>--config</string>
-		<string>/Users/travis/Developer/repos/neuralj/openlaputa/Caddyfile</string>
+		<string>/Users/travis/Developer/repos/neuralj/openlaputa/caddy/Caddyfile</string>
 	</array>
 	<key>WorkingDirectory</key>
 	<string>/Users/travis/Developer/repos/neuralj/openlaputa</string>
@@ -23,6 +23,8 @@
 	<string>/Users/travis/Developer/repos/neuralj/openlaputa/caddy/logs/caddy.log</string>
 	<key>EnvironmentVariables</key>
 	<dict>
+		<key>PORT</key>
+		<string>443</string>
 		<key>PATH</key>
 		<string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
 	</dict>

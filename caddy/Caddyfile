@@ -1,13 +1,4 @@
-{
-	auto_https off
+laputa.neuralj.com {
+	tls caddy/ssl/fullchain.pem caddy/ssl/privkey.pem
+	reverse_proxy localhost:3000
 }
-
-:80 {
-	redir https://{host}{uri} permanent
-}
-
-(neuralj_tls) {
-	tls /etc/caddy/ssl/fullchain.pem /etc/caddy/ssl/privkey.pem
-}
-
-import sites/*
