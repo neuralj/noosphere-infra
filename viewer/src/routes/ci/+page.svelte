@@ -41,13 +41,23 @@
 	let jobsLoading = $state(false);
 	let triggerLoading = $state(false);
 	let triggerMessage = $state('');
+	let fastPolling = $state(false);
 	let intervalId: ReturnType<typeof setInterval> | null = null;
+	let fastPollTimeout: ReturnType<typeof setTimeout> | null = null;
+	let jobsIntervalId: ReturnType<typeof setInterval> | null = null;
 
 	async function fetchOverview() {
 		try {
 			const res = await fetch('/api/ci?action=overview');
 			const data = await res.json();
 			overview = data;
+			if (selectedRun) {
+				const updated = data.recentRuns.find((r: WorkflowRun) => r.id === selectedRun.id);
+				if (updated) selectedRun = updated;
+			}
+			if (fastPolling && !hasActiveRuns()) {
+				stopFastPolling();
+			}
 		} catch (e) {
 			console.error('Failed to fetch CI overview:', e);
 		} finally {
@@ -55,13 +65,51 @@
 		}
 	}
 
+	function hasActiveRuns(): boolean {
+		if (!overview) return false;
+		return overview.recentRuns.some(r => r.status === 'in_progress' || r.status === 'queued');
+	}
+
+	function startFastPolling() {
+		fastPolling = true;
+		if (intervalId) clearInterval(intervalId);
+		intervalId = setInterval(fetchOverview, 5000);
+		if (fastPollTimeout) clearTimeout(fastPollTimeout);
+		fastPollTimeout = setTimeout(stopFastPolling, 120000);
+	}
+
+	function stopFastPolling() {
+		fastPolling = false;
+		if (fastPollTimeout) {
+			clearTimeout(fastPollTimeout);
+			fastPollTimeout = null;
+		}
+		if (intervalId) clearInterval(intervalId);
+		intervalId = setInterval(fetchOverview, 30000);
+	}
+
 	async function selectRun(run: WorkflowRun) {
 		selectedRun = run;
+		await fetchJobs(run.id);
+		if (jobsIntervalId) clearInterval(jobsIntervalId);
+		if (run.status === 'in_progress' || run.status === 'queued') {
+			jobsIntervalId = setInterval(() => fetchJobs(run.id), 5000);
+		}
+	}
+
+	async function fetchJobs(runId: number) {
 		jobsLoading = true;
 		try {
-			const res = await fetch(`/api/ci?action=jobs&run_id=${run.id}`);
+			const res = await fetch(`/api/ci?action=jobs&run_id=${runId}`);
 			const data = await res.json();
 			selectedRunJobs = data;
+			if (selectedRun) {
+				const allDone = data.every((j: Job) => j.status === 'completed');
+				if (allDone && jobsIntervalId) {
+					clearInterval(jobsIntervalId);
+					jobsIntervalId = null;
+				}
+			}
 		} catch (e) {
 			console.error('Failed to fetch jobs:', e);
 			selectedRunJobs = [];
@@ -77,8 +125,9 @@
 			const res = await fetch('/api/ci?action=trigger', { method: 'POST' });
 			const data = await res.json();
 			if (res.ok) {
-				triggerMessage = 'Build triggered successfully!';
+				triggerMessage = 'Build triggered! Polling every 5s...';
 				await fetchOverview();
+				startFastPolling();
 			} else {
 				triggerMessage = `Failed: ${data.error}`;
 			}
@@ -86,7 +135,6 @@
 			triggerMessage = `Error: ${String(e)}`;
 		} finally {
 			triggerLoading = false;
-			setTimeout(() => { triggerMessage = ''; }, 5000);
 		}
 	}
 
@@ -137,6 +185,8 @@
 
 	onDestroy(() => {
 		if (intervalId) clearInterval(intervalId);
+		if (fastPollTimeout) clearTimeout(fastPollTimeout);
+		if (jobsIntervalId) clearInterval(jobsIntervalId);
 	});
 </script>
 
@@ -155,6 +205,11 @@
 			</p>
 		</div>
 		<div class="flex items-center gap-3">
+			{#if fastPolling}
+				<span class="text-xs text-accent-yellow flex items-center gap-1">
+					<span class="animate-pulse">●</span> Live (5s)
+				</span>
+			{/if}
 			<Button onclick={triggerBuild} disabled={triggerLoading || !overview}>
 				{triggerLoading ? '⏳ Triggering...' : '🚀 Trigger Build'}
 			</Button>
