@@ -1,0 +1,4 @@
+laputa.neuralj.com {
+	tls caddy/ssl/fullchain.pem caddy/ssl/privkey.pem
+	reverse_proxy localhost:3000
+}

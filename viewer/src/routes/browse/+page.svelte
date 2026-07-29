@@ -22,6 +22,7 @@
 			bash: 'bash',
 			dockerfile: 'dockerfile',
 			conf: 'nginx',
+			Caddyfile: 'nginx',
 			py: 'python',
 			go: 'go',
 			html: 'html',

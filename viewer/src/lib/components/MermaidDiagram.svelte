@@ -24,24 +24,33 @@
 			});
 			const id = `mermaid-${Math.random().toString(36).slice(2)}`;
 			const { svg } = await mermaid.render(id, code);
-			if (container) container.innerHTML = svg;
+			if (container) {
+				container.innerHTML = svg;
+				const svgEl = container.querySelector('svg') as SVGSVGElement | null;
+				if (svgEl) {
+					svgEl.removeAttribute('width');
+					svgEl.removeAttribute('height');
+					svgEl.style.width = '100%';
+					svgEl.style.height = 'auto';
+					svgEl.style.display = 'block';
+					const vb = svgEl.viewBox.baseVal;
+					if (vb && vb.width > 0 && vb.height > 0) {
+						const aspect = vb.width / vb.height;
+						svgEl.style.aspectRatio = `${aspect}`;
+					}
+				}
+			}
 		} catch (e) {
 			error = String(e);
 		}
 	});
 </script>
 
-<div class="mermaid-wrapper">
+<div class="w-full overflow-x-auto">
 	{#if error}
 		<div class="p-4 text-accent-red text-sm">{error}</div>
 	{:else}
-		<div bind:this={container} class="flex justify-center"></div>
+		<div bind:this={container}></div>
 	{/if}
 </div>
 
-<style>
-	.mermaid-wrapper :global(svg) {
-		max-width: 100%;
-		height: auto;
-	}
-</style>

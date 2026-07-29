@@ -1,9 +1,9 @@
-import adapter from '@sveltejs/adapter-static';
+import adapter from '@sveltejs/adapter-node';
 
 export default {
 	kit: {
 		adapter: adapter({
-			fallback: '200.html'
+			out: 'build'
 		})
 	},
 	compilerOptions: {

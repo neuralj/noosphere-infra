@@ -5,8 +5,7 @@
 		{ href: '/', label: 'Dashboard', icon: '⊞' },
 		{ href: '/browse', label: 'Files', icon: '📁' },
 		{ href: '/images', label: 'Images', icon: '🐳' },
-		{ href: '/compose', label: 'Compose', icon: '🔗' },
-		{ href: '/nginx', label: 'Nginx', icon: '🌐' },
+		{ href: '/proxy', label: 'Proxy', icon: '🌐' },
 		{ href: '/ci', label: 'CI/CD', icon: '⚙' }
 	];
 </script>

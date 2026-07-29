@@ -1,3 +1,4 @@
-nginx/ssl/
-nginx/logs/
-compose/.env
+caddy/logs/
+viewer/logs/
+viewer/build/
+viewer/node_modules/

@@ -64,7 +64,7 @@
 	}
 </script>
 
-<div class="p-6 max-w-6xl mx-auto space-y-6">
+<div class="p-6 max-w-full mx-auto space-y-6">
 	<div>
 		<h1 class="text-2xl font-bold text-accent-blue">Docker Images</h1>
 		<p class="text-muted-foreground mt-1">Image dependency topology and metadata</p>

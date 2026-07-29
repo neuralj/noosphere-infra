@@ -1,12 +1,10 @@
 import { json } from '@sveltejs/kit';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
-import { resolve, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { findRepoRoot } from '$lib/server/repo';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+const REPO_ROOT = findRepoRoot();
 const execFileAsync = promisify(execFile);
-const REPO_ROOT = resolve(__dirname, '../../../../../');
 
 export async function GET({ url }) {
 	const action = url.searchParams.get('action') || 'log';

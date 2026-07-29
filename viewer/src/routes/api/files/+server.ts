@@ -1,10 +1,9 @@
 import { json } from '@sveltejs/kit';
 import { readdir, readFile, stat } from 'fs/promises';
-import { join, resolve, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { join, resolve } from 'path';
+import { findRepoRoot } from '$lib/server/repo';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const REPO_ROOT = resolve(__dirname, '../../../../../');
+const REPO_ROOT = findRepoRoot();
 
 export async function GET({ url }) {
 	const path = url.searchParams.get('path') || '';
