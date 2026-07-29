@@ -40,6 +40,7 @@
 	let selectedRunJobs = $state<Job[]>([]);
 	let jobsLoading = $state(false);
 	let triggerLoading = $state(false);
+	let triggerMessage = $state('');
 	let intervalId: ReturnType<typeof setInterval> | null = null;
 
 	async function fetchOverview() {
@@ -71,12 +72,21 @@
 
 	async function triggerBuild() {
 		triggerLoading = true;
+		triggerMessage = '';
 		try {
-			// GitHub API requires authentication to trigger workflows
-			// This is a placeholder - actual implementation would need a backend proxy
-			alert('To trigger a build, go to:\n' + overview?.workflow.url);
+			const res = await fetch('/api/ci?action=trigger', { method: 'POST' });
+			const data = await res.json();
+			if (res.ok) {
+				triggerMessage = 'Build triggered successfully!';
+				await fetchOverview();
+			} else {
+				triggerMessage = `Failed: ${data.error}`;
+			}
+		} catch (e) {
+			triggerMessage = `Error: ${String(e)}`;
 		} finally {
 			triggerLoading = false;
+			setTimeout(() => { triggerMessage = ''; }, 5000);
 		}
 	}
 
@@ -144,9 +154,16 @@
 				{/if}
 			</p>
 		</div>
-		<Button onclick={triggerBuild} disabled={triggerLoading || !overview}>
-			{triggerLoading ? 'Triggering...' : '🚀 Trigger Build'}
-		</Button>
+		<div class="flex items-center gap-3">
+			<Button onclick={triggerBuild} disabled={triggerLoading || !overview}>
+				{triggerLoading ? '⏳ Triggering...' : '🚀 Trigger Build'}
+			</Button>
+			{#if triggerMessage}
+				<span class="text-sm {triggerMessage.includes('Failed') || triggerMessage.includes('Error') ? 'text-red-500' : 'text-green-500'}">
+					{triggerMessage}
+				</span>
+			{/if}
+		</div>
 	</div>
 
 	{#if loading}

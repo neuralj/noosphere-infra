@@ -1,12 +1,16 @@
 import { json } from '@sveltejs/kit';
 import { readdir, readFile } from 'fs/promises';
 import { join } from 'path';
+import { execFile } from 'child_process';
+import { promisify } from 'util';
 import { findRepoRoot } from '$lib/server/repo';
 
 const REPO_ROOT = findRepoRoot();
 const GITHUB_API = 'https://api.github.com';
 const OWNER = 'neuralj';
 const REPO = 'openlaputa';
+
+const execFileAsync = promisify(execFile);
 
 interface WorkflowRun {
 	id: number;
@@ -52,6 +56,47 @@ export async function GET({ url }) {
 	} catch (e) {
 		return json({ error: String(e) }, { status: 500 });
 	}
+}
+
+export async function POST({ url }) {
+	const action = url.searchParams.get('action');
+
+	try {
+		switch (action) {
+			case 'trigger':
+				return json(await triggerBuild());
+			default:
+				return json({ error: 'unknown action' }, { status: 400 });
+		}
+	} catch (e) {
+		return json({ error: String(e) }, { status: 500 });
+	}
+}
+
+async function triggerBuild() {
+	const { stdout: token } = await execFileAsync('gh', ['auth', 'token']);
+	const cleanToken = token.trim();
+
+	const response = await fetch(
+		`${GITHUB_API}/repos/${OWNER}/${REPO}/actions/workflows/build.yml/dispatches`,
+		{
+			method: 'POST',
+			headers: {
+				'Accept': 'application/vnd.github.v3+json',
+				'Authorization': `Bearer ${cleanToken}`,
+				'User-Agent': 'openlaputa-viewer',
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({ ref: 'main' })
+		}
+	);
+
+	if (!response.ok) {
+		const errorText = await response.text();
+		throw new Error(`GitHub API error: ${response.status} - ${errorText}`);
+	}
+
+	return { success: true, message: 'Build triggered successfully' };
 }
 
 async function getOverview() {
