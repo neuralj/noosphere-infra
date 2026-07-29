@@ -84,5 +84,7 @@ images:
 ## Manual trigger
 
 ```bash
-gh workflow run build.yml -R neuralj/noosphere-infra
+gh workflow run build.yml -R neuralj/openlaputa
 ```
+
+
