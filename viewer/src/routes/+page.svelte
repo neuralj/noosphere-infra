@@ -36,7 +36,7 @@
 	const cards = [
 		{ href: '/browse', label: 'File Browser', icon: '📁', desc: 'Browse repo files with syntax highlighting' },
 		{ href: '/images', label: 'Docker Images', icon: '🐳', desc: '11 images with dependency topology' },
-		{ href: '/services', label: 'Services', icon: '⚡', desc: 'Local service status and health' },
+		{ href: '/proxy', label: 'Proxy Routes', icon: '🌐', desc: 'Caddy reverse proxy and vhost configuration' },
 		{ href: '/ci', label: 'CI/CD Pipeline', icon: '⚙️', desc: 'GitHub Actions multi-arch build workflow' }
 	];
 </script>

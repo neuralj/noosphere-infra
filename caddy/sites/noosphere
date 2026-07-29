@@ -1,0 +1,30 @@
+ops.neuralj.com {
+	import neuralj_tls
+	reverse_proxy 127.0.0.1:9000
+}
+
+code.neuralj.com {
+	import neuralj_tls
+	reverse_proxy 127.0.0.1:8080
+}
+
+jupyter.neuralj.com {
+	import neuralj_tls
+	reverse_proxy 127.0.0.1:8088
+}
+
+web.neuralj.com,
+app.neuralj.com {
+	import neuralj_tls
+	reverse_proxy 127.0.0.1:8090
+}
+
+api.neuralj.com {
+	import neuralj_tls
+	reverse_proxy 127.0.0.1:8091
+}
+
+grafana.neuralj.com {
+	import neuralj_tls
+	reverse_proxy 127.0.0.1:8120
+}
