@@ -76,7 +76,7 @@ COPY --chown=${USERNAME}:${USERNAME} files/.gitconfig .gitconfig
 
 # 安装 Python 包（使用 uv 和 requirements.txt）
 COPY files/requirements.txt /tmp/requirements.txt
-RUN uv pip install --system --no-cache -r /tmp/requirements.txt
+RUN UV_SYSTEM_PYTHON=1 uv pip install --system --no-cache -r /tmp/requirements.txt
 
 # SSH 配置
 USER root
