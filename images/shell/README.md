@@ -22,11 +22,9 @@ AI Agent 时代的轻量级运行时环境，替代 devshell 作为其他镜像�
 | | fd-find | latest |
 | | jq | latest |
 | | yq | 4.40.5 |
-| | tmux | latest |
 | **Shell** | zsh | latest |
 | | Oh My Zsh | latest |
 | | Powerlevel10k | latest |
-| **网络** | OpenSSH | latest |
 
 ## 移除的组件
 
@@ -53,22 +51,6 @@ RUN pip install -r requirements.txt
 # 启动服务
 CMD ["python", "app.py"]
 ```
-
-### SSH 访问
-
-```bash
-ssh travis@<container-ip>
-```
-
-默认密码: `neural`（建议通过 SSH key 访问）
-
-### 挂载卷
-
-```bash
-docker run -v /path/to/data:/noosphere ghcr.io/neuralj/shell:latest
-```
-
-首次启动会自动修复 `/noosphere` 目录权限。
 
 ## 构建
 
@@ -98,7 +80,6 @@ webtest (独立镜像, 基于 Playwright)
 | Playwright | ✅ | ❌ |
 | Node.js | ❌ | ✅ |
 | ripgrep/fd | ❌ | ✅ |
-| tmux | ❌ | ✅ |
 | yq | ❌ | ✅ |
 
 ## 迁移

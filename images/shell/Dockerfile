@@ -4,7 +4,7 @@
 FROM ubuntu:24.04
 
 LABEL maintainer="travis"
-LABEL description="AI Agent workspace: Python + Go + Node.js + zsh + SSH"
+LABEL description="AI Agent workspace: Python + Go + Node.js + zsh"
 
 # 版本锁定
 ARG NODE_MAJOR=20
@@ -28,12 +28,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     golang \
     # 基础工具
     git curl wget ca-certificates \
-    vim jq tmux \
+    vim jq \
     ripgrep fd-find \
     # Shell 环境
     zsh \
-    # 网络
-    openssh-server \
     # 系统
     locales tzdata sudo \
     && locale-gen en_US.UTF-8 \
@@ -79,20 +77,4 @@ RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master
 COPY --chown=${USERNAME}:${USERNAME} files/.zshrc .zshrc
 COPY --chown=${USERNAME}:${USERNAME} files/.gitconfig .gitconfig
 
-# SSH 配置
-USER root
-RUN mkdir -p /var/run/sshd \
-    && sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config \
-    && sed -i 's/#PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config
-
-# 启动脚本
-COPY files/entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
-
-# 健康检查
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD pgrep sshd || exit 1
-
-EXPOSE 22
-
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+CMD ["/usr/bin/zsh"]
