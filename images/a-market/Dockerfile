@@ -1,4 +1,4 @@
-FROM ghcr.io/neuralj/devshell:latest
+FROM ghcr.io/neuralj/shell:latest
 
 LABEL description="a-market workspace with uvicorn API"
 

@@ -1,0 +1,26 @@
+[user]
+	name = travis
+	email = travis@neuralj.com
+
+[init]
+	defaultBranch = main
+
+[pull]
+	rebase = true
+
+[push]
+	default = current
+
+[core]
+	autocrlf = input
+	editor = vim
+
+[alias]
+	st = status
+	co = checkout
+	br = branch
+	ci = commit
+	lg = log --oneline --graph --all
+
+[color]
+	ui = auto

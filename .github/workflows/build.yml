@@ -26,6 +26,8 @@ jobs:
         id: filter
         with:
           filters: |
+            shell:
+              - 'images/shell/**'
             devshell:
               - 'images/devshell/**'
             postgres:
@@ -52,7 +54,7 @@ jobs:
         id: categorize
         run: |
           IMAGES='${{ steps.filter.outputs.changes }}'
-          # Images that depend on devshell
+          # Images that depend on shell
           DEPENDENT='["a-bulletin","a-market"]'
           # Base images (everything else)
           BASE=$(echo "$IMAGES" | jq -c '[.[] | select(. != "a-bulletin" and . != "a-market")]')

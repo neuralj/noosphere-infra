@@ -2,6 +2,7 @@ registry: ghcr.io/neuralj
 mirror: ghcr.nju.edu.cn
 
 images:
+  shell:       { tag: latest }
   devshell:    { tag: latest }
   postgres:    { tag: "17" }
   webtest:     { tag: latest }
@@ -10,6 +11,6 @@ images:
   mongodb:     { tag: latest }
   grafana:     { tag: latest }
   qdrant:      { tag: latest }
+  opensheeta:  { tag: latest }
   a-bulletin:  { tag: latest }
   a-market:    { tag: latest }
-  opensheeta:  { tag: latest }
