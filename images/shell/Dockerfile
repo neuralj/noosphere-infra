@@ -68,7 +68,6 @@ RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master
 COPY --chown=${USERNAME}:${USERNAME} files/.zshrc .zshrc
 COPY --chown=${USERNAME}:${USERNAME} files/.p10k.zsh .p10k.zsh
 COPY --chown=${USERNAME}:${USERNAME} files/.gitconfig .gitconfig
-COPY --chown=${USERNAME}:${USERNAME} files/.tmux.conf .tmux.conf
 
 # 安装 Python 包（使用 requirements.txt 锁定版本）
 COPY files/requirements.txt /tmp/requirements.txt
