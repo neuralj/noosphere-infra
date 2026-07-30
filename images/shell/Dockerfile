@@ -51,8 +51,7 @@ RUN curl -fsSL "https://github.com/mikefarah/yq/releases/download/v${YQ_VERSION}
     && chmod +x /usr/local/bin/yq
 
 # 安装 uv（架构感知）
-RUN curl -fsSL "https://github.com/astral-sh/uv/releases/download/${UV_VERSION}/uv-${TARGETARCH}-unknown-linux-gnu.tar.gz" \
-    | tar xz -C /usr/local/bin --strip-components=1 "uv-${TARGETARCH}-unknown-linux-gnu/uv"
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh -s -- -b /usr/local/bin ${UV_VERSION}
 
 # 创建用户和组
 RUN useradd -m -s /usr/bin/zsh ${USERNAME} \
