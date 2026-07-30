@@ -24,7 +24,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
 # 系统包（单个 RUN 最小化层数）
 RUN apt-get update && apt-get install -y --no-install-recommends \
     # 语言运行时
-    python3 \
+    python3 python3-full \
     golang \
     # 基础工具
     git curl wget ca-certificates \
