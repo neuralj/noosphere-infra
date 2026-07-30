@@ -9,6 +9,7 @@ LABEL description="AI Agent workspace: Python + Go + Node.js + zsh + SSH"
 # 版本锁定
 ARG NODE_MAJOR=20
 ARG YQ_VERSION=4.40.5
+ARG UV_VERSION=0.5.0
 ARG USERNAME=travis
 ARG USER_PASSWORD=neural
 ARG TARGETARCH
@@ -23,7 +24,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
 # 系统包（单个 RUN 最小化层数）
 RUN apt-get update && apt-get install -y --no-install-recommends \
     # 语言运行时
-    python3 python3-pip python3-venv \
+    python3 \
     golang \
     # 基础工具
     git curl wget ca-certificates \
@@ -49,6 +50,10 @@ RUN curl -fsSL "https://github.com/mikefarah/yq/releases/download/v${YQ_VERSION}
     -o /usr/local/bin/yq \
     && chmod +x /usr/local/bin/yq
 
+# 安装 uv（架构感知）
+RUN curl -fsSL "https://github.com/astral-sh/uv/releases/download/${UV_VERSION}/uv-${TARGETARCH}-unknown-linux-gnu.tar.gz" \
+    | tar xz -C /usr/local/bin --strip-components=1 "uv-${TARGETARCH}-unknown-linux-gnu/uv"
+
 # 创建用户和组
 RUN useradd -m -s /usr/bin/zsh ${USERNAME} \
     && echo "${USERNAME}:${USER_PASSWORD}" | chpasswd \
@@ -69,9 +74,9 @@ RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master
 COPY --chown=${USERNAME}:${USERNAME} files/.zshrc .zshrc
 COPY --chown=${USERNAME}:${USERNAME} files/.gitconfig .gitconfig
 
-# 安装 Python 包（使用 requirements.txt 锁定版本）
+# 安装 Python 包（使用 uv 和 requirements.txt）
 COPY files/requirements.txt /tmp/requirements.txt
-RUN python3 -m pip install --no-cache-dir --break-system-packages -r /tmp/requirements.txt
+RUN uv pip install --system --no-cache -r /tmp/requirements.txt
 
 # SSH 配置
 USER root
