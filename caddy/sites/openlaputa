@@ -1,0 +1,8 @@
+openlaputa.neuralj.com {
+	import neuralj_tls
+
+	reverse_proxy localhost:3000 {
+		header_up X-Forwarded-Proto https
+		header_up X-Forwarded-For {remote_host}
+	}
+}

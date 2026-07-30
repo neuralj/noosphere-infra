@@ -7,7 +7,7 @@
 }
 
 (neuralj_tls) {
-	tls /etc/caddy/ssl/fullchain.pem /etc/caddy/ssl/privkey.pem
+	tls caddy/ssl/fullchain.pem caddy/ssl/privkey.pem
 }
 
 import sites/*
