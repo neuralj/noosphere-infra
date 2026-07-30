@@ -52,7 +52,7 @@ RUN curl -fsSL "https://github.com/mikefarah/yq/releases/download/v${YQ_VERSION}
 
 # 安装 uv（架构感知）
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
-RUN mv /root/.cargo/bin/uv /usr/local/bin/uv
+RUN mv /root/.local/bin/uv /usr/local/bin/uv && mv /root/.local/bin/uvx /usr/local/bin/uvx
 
 # 创建用户和组
 RUN useradd -m -s /usr/bin/zsh ${USERNAME} \
