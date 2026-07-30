@@ -24,6 +24,10 @@ interface ImageInfo {
 	ports: string[];
 	description: string;
 	stats: ImageStats;
+	pullCommand: string;
+	mirrorPullCommand: string;
+	isInternal: boolean;
+	dependsOn: string[];
 }
 
 export async function GET() {
@@ -32,6 +36,15 @@ export async function GET() {
 		const dirs = await readdir(imagesDir, { withFileTypes: true });
 		const images: ImageInfo[] = [];
 
+		// First pass: collect all image names to determine internal dependencies
+		const imageNames = new Set<string>();
+		for (const dir of dirs) {
+			if (dir.isDirectory()) {
+				imageNames.add(dir.name);
+			}
+		}
+
+		// Second pass: parse Dockerfiles
 		for (const dir of dirs) {
 			if (!dir.isDirectory()) continue;
 			const dockerfilePath = join(imagesDir, dir.name, 'Dockerfile');
@@ -52,6 +65,12 @@ export async function GET() {
 				const lineCount = allLines.length;
 				const complexity: ImageStats['complexity'] =
 					lineCount <= 10 && runCount <= 1 ? 'simple' : lineCount <= 40 && runCount <= 5 ? 'moderate' : 'complex';
+
+				// Determine if this image depends on an internal image
+				const fromBase = fromImage.split(':')[0].split('/').pop() || fromImage;
+				const isInternal = imageNames.has(fromBase);
+				const dependsOn = isInternal ? [fromBase] : [];
+
 				images.push({
 					name: dir.name,
 					dockerfile: content,
@@ -68,12 +87,23 @@ export async function GET() {
 						hasHealthcheck,
 						hasEntrypoint,
 						complexity
-					}
+					},
+					pullCommand: `docker pull ghcr.io/neuralj/${dir.name}:latest`,
+					mirrorPullCommand: `./scripts/ghcr-pull ghcr.io/neuralj/${dir.name}:latest`,
+					isInternal,
+					dependsOn
 				});
 			} catch {
 				// skip dirs without Dockerfile
 			}
 		}
+
+		// Sort: internal dependencies first (devshell before a-bulletin/a-market)
+		images.sort((a, b) => {
+			if (a.dependsOn.length === 0 && b.dependsOn.length > 0) return -1;
+			if (a.dependsOn.length > 0 && b.dependsOn.length === 0) return 1;
+			return a.name.localeCompare(b.name);
+		});
 
 		return json({ images });
 	} catch (e) {

@@ -1,0 +1,126 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# image-prune: Clean up old Docker images
+# Usage: ./scripts/image-prune [--dry-run]
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(dirname "$SCRIPT_DIR")"
+IMAGES_YML="$SCRIPT_DIR/images.yml"
+REGISTRY="ghcr.io/neuralj"
+DRY_RUN=false
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+# Parse arguments
+for arg in "$@"; do
+    case "$arg" in
+        --dry-run)
+            DRY_RUN=true
+            echo "${BLUE}[DRY RUN] No changes will be made${NC}"
+            echo ""
+            ;;
+    esac
+done
+
+# Parse images.yml
+parse_images() {
+    grep -E '^\s{2}\S+:' "$IMAGES_YML" | sed 's/:.*//' | tr -d ' '
+}
+
+# Get disk space before
+get_disk_usage() {
+    docker system df --format '{{.Size}}' | head -1
+}
+
+# Count images
+count_images() {
+    docker images --format '{{.Repository}}:{{.Tag}}' | wc -l | tr -d ' '
+}
+
+echo "${BLUE}Docker Image Cleanup${NC}"
+echo "==================="
+echo ""
+
+# Show current state
+echo "Current state:"
+echo "  Images: $(count_images)"
+echo "  Disk usage: $(get_disk_usage)"
+echo ""
+
+# Step 1: Remove dangling images
+echo "Step 1: Removing dangling images..."
+DANGLING=$(docker images -f "dangling=true" -q | wc -l | tr -d ' ')
+
+if [[ "$DANGLING" -gt 0 ]]; then
+    echo "  Found $DANGLING dangling images"
+    if [[ "$DRY_RUN" == "false" ]]; then
+        docker image prune -f >/dev/null 2>&1
+        echo "  ${GREEN}✓ Removed dangling images${NC}"
+    else
+        echo "  ${YELLOW}[DRY RUN] Would remove $DANGLING dangling images${NC}"
+    fi
+else
+    echo "  No dangling images found"
+fi
+echo ""
+
+# Step 2: Remove old tagged images (keep only latest)
+echo "Step 2: Removing old tagged images..."
+OLD_IMAGES=0
+
+while IFS= read -r image; do
+    # Find all tags for this image except 'latest'
+    TAGS=$(docker images "${REGISTRY}/${image}" --format "{{.Tag}}" | grep -v "^latest$" || true)
+
+    for tag in $TAGS; do
+        OLD_IMAGES=$((OLD_IMAGES + 1))
+
+        if [[ "$DRY_RUN" == "false" ]]; then
+            docker rmi "${REGISTRY}/${image}:${tag}" >/dev/null 2>&1 || true
+            echo "  ${GREEN}✓ Removed ${image}:${tag}${NC}"
+        else
+            echo "  ${YELLOW}[DRY RUN] Would remove ${image}:${tag}${NC}"
+        fi
+    done
+done < <(parse_images)
+
+if [[ "$OLD_IMAGES" -eq 0 ]]; then
+    echo "  No old tagged images found"
+else
+    echo ""
+    echo "  Total old images: $OLD_IMAGES"
+fi
+echo ""
+
+# Step 3: Remove unused images (not referenced by containers)
+echo "Step 3: Checking for unused images..."
+UNUSED=$(docker images --format "{{.Repository}}:{{.Tag}}" | while read -r img; do
+    if ! docker ps -a --format "{{.Image}}" | grep -q "^${img}$"; then
+        echo "$img"
+    fi
+done | wc -l | tr -d ' ')
+
+if [[ "$UNUSED" -gt 0 ]]; then
+    echo "  Found $UNUSED unused images (not used by any container)"
+    echo "  Run 'docker image prune -a' to remove them"
+else
+    echo "  No unused images found"
+fi
+echo ""
+
+# Show final state
+echo "Final state:"
+echo "  Images: $(count_images)"
+echo "  Disk usage: $(get_disk_usage)"
+echo ""
+
+if [[ "$DRY_RUN" == "true" ]]; then
+    echo "${YELLOW}This was a dry run. No changes were made.${NC}"
+    echo "Run without --dry-run to actually remove images."
+fi

@@ -1,0 +1,168 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# image-status: Check local vs remote image versions
+# Usage: ./scripts/image-status [image-name]
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(dirname "$SCRIPT_DIR")"
+IMAGES_YML="$SCRIPT_DIR/images.yml"
+REGISTRY="ghcr.io/neuralj"
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Parse images.yml
+parse_images() {
+    grep -E '^\s{2}\S+:' "$IMAGES_YML" | sed 's/:.*//' | tr -d ' '
+}
+
+# Get local image tag
+get_local_tag() {
+    local image="$1"
+    docker images "${REGISTRY}/${image}:latest" --format "{{.Tag}}" 2>/dev/null | head -1
+}
+
+# Get local image digest
+get_local_digest() {
+    local image="$1"
+    docker images "${REGISTRY}/${image}:latest" --format "{{.ID}}" 2>/dev/null | head -1
+}
+
+# Get remote image digest from GHCR
+get_remote_digest() {
+    local image="$1"
+
+    # Use crane if available, otherwise fall back to docker manifest
+    if command -v crane &>/dev/null; then
+        crane digest "${REGISTRY}/${image}:latest" 2>/dev/null | cut -d: -f2 | cut -c1-12
+    elif command -v skopeo &>/dev/null; then
+        skopeo inspect "docker://${REGISTRY}/${image}:latest" 2>/dev/null | jq -r '.Digest' | cut -d: -f2 | cut -c1-12
+    else
+        # Fall back to docker pull --quiet and compare
+        echo "unknown"
+    fi
+}
+
+# Get remote tags
+get_remote_tags() {
+    local image="$1"
+    if command -v crane &>/dev/null; then
+        crane ls "${REGISTRY}/${image}" 2>/dev/null | grep -v "^sha256-" | head -5
+    else
+        echo "unknown"
+    fi
+}
+
+# Get image size
+get_image_size() {
+    local image="$1"
+    docker images "${REGISTRY}/${image}:latest" --format "{{.Size}}" 2>/dev/null | head -1
+}
+
+# Check if image exists locally
+has_local_image() {
+    local image="$1"
+    docker image inspect "${REGISTRY}/${image}:latest" &>/dev/null
+}
+
+# Print header
+print_header() {
+    printf "${BLUE}%-20s %-12s %-12s %-10s %-10s %-10s${NC}\n" "IMAGE" "LOCAL" "REMOTE" "SIZE" "STATUS" "TAGS"
+    printf "%-20s %-12s %-12s %-10s %-10s %-10s\n" "-----" "-----" "------" "----" "------" "----"
+}
+
+# Print image row
+print_row() {
+    local image="$1"
+    local local_id="$2"
+    local remote_id="$3"
+    local size="$4"
+    local status="$5"
+    local tags="$6"
+    local color=""
+
+    case "$status" in
+        "up-to-date") color="$GREEN" ;;
+        "outdated") color="$YELLOW" ;;
+        "missing") color="$RED" ;;
+        *) color="$NC" ;;
+    esac
+
+    printf "${color}%-20s %-12s %-12s %-10s %-10s %-10s${NC}\n" \
+        "$image" "$local_id" "$remote_id" "$size" "$status" "$tags"
+}
+
+# Main
+main() {
+    local filter="${1:-}"
+    local images=()
+
+    if [[ -n "$filter" ]]; then
+        images=("$filter")
+    else
+        while IFS= read -r line; do
+            images+=("$line")
+        done < <(parse_images)
+    fi
+
+    print_header
+
+    local total=0
+    local uptodate=0
+    local outdated=0
+    local missing=0
+
+    for image in "${images[@]}"; do
+        total=$((total + 1))
+
+        if has_local_image "$image"; then
+            local local_id
+            local_id=$(get_local_digest "$image" | cut -c1-12)
+            local size
+            size=$(get_image_size "$image")
+
+            local remote_id
+            remote_id=$(get_remote_digest "$image")
+
+            local tags
+            tags=$(get_remote_tags "$image" | tr '\n' ',' | sed 's/,$//')
+            if [[ ${#tags} -gt 20 ]]; then
+                tags="${tags:0:17}..."
+            fi
+
+            if [[ "$remote_id" == "unknown" ]]; then
+                print_row "$image" "$local_id" "?" "$size" "unknown" "$tags"
+            elif [[ "$local_id" == "$remote_id" ]]; then
+                print_row "$image" "$local_id" "$remote_id" "$size" "up-to-date" "$tags"
+                uptodate=$((uptodate + 1))
+            else
+                print_row "$image" "$local_id" "$remote_id" "$size" "outdated" "$tags"
+                outdated=$((outdated + 1))
+            fi
+        else
+            local tags
+            tags=$(get_remote_tags "$image" | tr '\n' ',' | sed 's/,$//')
+            if [[ ${#tags} -gt 20 ]]; then
+                tags="${tags:0:17}..."
+            fi
+            print_row "$image" "-" "-" "-" "missing" "$tags"
+            missing=$((missing + 1))
+        fi
+    done
+
+    echo ""
+    printf "Total: %d | ${GREEN}Up-to-date: %d${NC} | ${YELLOW}Outdated: %d${NC} | ${RED}Missing: %d${NC}\n" \
+        "$total" "$uptodate" "$outdated" "$missing"
+
+    if [[ $outdated -gt 0 || $missing -gt 0 ]]; then
+        echo ""
+        echo "Run './scripts/pull-all' to update all images"
+    fi
+}
+
+main "$@"

@@ -2,13 +2,14 @@ registry: ghcr.io/neuralj
 mirror: ghcr.nju.edu.cn
 
 images:
-  devshell:  { tag: latest }
-  postgres:  { tag: "17" }
-  webtest:   { tag: latest }
-  ollama:    { tag: latest }
-  mineru:    { tag: latest }
-  mongodb:   { tag: latest }
-  grafana:   { tag: latest }
-  qdrant:    { tag: latest }
-  a-market:  { tag: latest }
-  openworker-next: { tag: latest }
+  devshell:    { tag: latest }
+  postgres:    { tag: "17" }
+  webtest:     { tag: latest }
+  ollama:      { tag: latest }
+  mineru:      { tag: latest }
+  mongodb:     { tag: latest }
+  grafana:     { tag: latest }
+  qdrant:      { tag: latest }
+  a-bulletin:  { tag: latest }
+  a-market:    { tag: latest }
+  opensheeta:  { tag: latest }
