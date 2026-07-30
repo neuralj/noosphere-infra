@@ -72,8 +72,7 @@ COPY --chown=${USERNAME}:${USERNAME} files/.tmux.conf .tmux.conf
 
 # 安装 Python 包（使用 requirements.txt 锁定版本）
 COPY files/requirements.txt /tmp/requirements.txt
-RUN python3 -m pip install --no-cache-dir --break-system-packages -r /tmp/requirements.txt \
-    && rm /tmp/requirements.txt
+RUN python3 -m pip install --no-cache-dir --break-system-packages -r /tmp/requirements.txt
 
 # SSH 配置
 USER root
