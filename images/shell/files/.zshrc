@@ -4,9 +4,6 @@ ZSH_THEME="powerlevel10k/powerlevel10k"
 plugins=(git zsh-autosuggestions fast-syntax-highlighting)
 source $ZSH/oh-my-zsh.sh
 
-# Powerlevel10k 配置
-[[ -f ~/.p10k.zsh ]] && source ~/.p10k.zsh
-
 # 别名
 alias ll="ls -alF"
 alias la="ls -A"

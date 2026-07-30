@@ -1,7 +1,3 @@
-[user]
-	name = travis
-	email = travis@neuralj.com
-
 [init]
 	defaultBranch = main
 

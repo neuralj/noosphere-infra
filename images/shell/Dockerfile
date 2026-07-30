@@ -11,6 +11,7 @@ ARG NODE_MAJOR=20
 ARG YQ_VERSION=4.40.5
 ARG USERNAME=travis
 ARG USER_PASSWORD=neural
+ARG TARGETARCH
 
 ENV DEBIAN_FRONTEND=noninteractive \
     TZ=Asia/Shanghai \
@@ -43,8 +44,8 @@ RUN curl -fsSL https://deb.nodesource.com/setup_${NODE_MAJOR}.x | bash - \
     && apt-get install -y nodejs \
     && rm -rf /var/lib/apt/lists/*
 
-# 安装 yq
-RUN curl -fsSL "https://github.com/mikefarah/yq/releases/download/v${YQ_VERSION}/yq_linux_amd64" \
+# 安装 yq（架构感知）
+RUN curl -fsSL "https://github.com/mikefarah/yq/releases/download/v${YQ_VERSION}/yq_linux_${TARGETARCH}" \
     -o /usr/local/bin/yq \
     && chmod +x /usr/local/bin/yq
 
@@ -66,7 +67,6 @@ RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master
 
 # 复制配置文件
 COPY --chown=${USERNAME}:${USERNAME} files/.zshrc .zshrc
-COPY --chown=${USERNAME}:${USERNAME} files/.p10k.zsh .p10k.zsh
 COPY --chown=${USERNAME}:${USERNAME} files/.gitconfig .gitconfig
 
 # 安装 Python 包（使用 requirements.txt 锁定版本）
@@ -77,11 +77,7 @@ RUN python3 -m pip install --no-cache-dir --break-system-packages -r /tmp/requir
 USER root
 RUN mkdir -p /var/run/sshd \
     && sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config \
-    && sed -i 's/#PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config \
-    && mkdir -p /var/log/supervisor
-
-# supervisord 配置
-COPY files/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+    && sed -i 's/#PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config
 
 # 启动脚本
 COPY files/entrypoint.sh /usr/local/bin/entrypoint.sh
