@@ -60,6 +60,11 @@ RUN useradd -m -s /usr/bin/zsh ${USERNAME} \
     && usermod -aG sudo ${USERNAME} \
     && echo "${USERNAME} ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
+# 以 root 身份安装 Python 包（需要删除 EXTERNALLY-MANAGED 文件）
+COPY files/requirements.txt /tmp/requirements.txt
+RUN rm -f /usr/lib/python3.12/EXTERNALLY-MANAGED \
+    && uv pip install --system --no-cache -r /tmp/requirements.txt
+
 # 切换到用户
 USER ${USERNAME}
 WORKDIR /home/${USERNAME}
@@ -73,10 +78,6 @@ RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master
 # 复制配置文件
 COPY --chown=${USERNAME}:${USERNAME} files/.zshrc .zshrc
 COPY --chown=${USERNAME}:${USERNAME} files/.gitconfig .gitconfig
-
-# 安装 Python 包（使用 uv 和 requirements.txt）
-COPY files/requirements.txt /tmp/requirements.txt
-RUN rm -f /usr/lib/python3.12/EXTERNALLY-MANAGED && uv pip install --system --no-cache -r /tmp/requirements.txt
 
 # SSH 配置
 USER root
