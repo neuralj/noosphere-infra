@@ -14,7 +14,7 @@
 
 	interface Service {
 		name: string;
-		status: 'running' | 'stopped';
+		status: 'RUNNING' | 'STOPPED' | 'STARTING' | 'BACKOFF' | 'FATAL' | 'EXITED';
 		port: number;
 		pid: number | null;
 	}
@@ -169,7 +169,7 @@
 				<Card.Content class="p-4">
 					<p class="text-xs text-muted-foreground">Services</p>
 					<p class="text-2xl font-bold text-green-500">
-						{services.filter(s => s.status === 'running').length}/{services.length}
+						{services.filter(s => s.status === 'RUNNING').length}/{services.length}
 					</p>
 					<p class="text-xs text-muted-foreground mt-1">running</p>
 				</Card.Content>
@@ -209,7 +209,7 @@
 						<div class="space-y-2">
 							{#each services as service}
 								<div class="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
-									<span class="text-lg {service.status === 'running' ? 'text-green-500' : 'text-red-500'}">●</span>
+									<span class="text-lg {service.status === 'RUNNING' ? 'text-green-500' : 'text-red-500'}">●</span>
 									<div class="flex-1">
 										<p class="text-sm font-medium">{service.name}</p>
 										<p class="text-xs text-muted-foreground">
@@ -219,7 +219,7 @@
 											{/if}
 										</p>
 									</div>
-									<span class="text-xs {service.status === 'running' ? 'text-green-500' : 'text-red-500'}">
+									<span class="text-xs {service.status === 'RUNNING' ? 'text-green-500' : 'text-red-500'}">
 										{service.status}
 									</span>
 								</div>

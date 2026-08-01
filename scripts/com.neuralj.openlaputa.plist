@@ -3,13 +3,13 @@
 <plist version="1.0">
 <dict>
 	<key>Label</key>
-	<string>com.neuralj.caddy</string>
+	<string>com.neuralj.openlaputa</string>
 	<key>ProgramArguments</key>
 	<array>
-		<string>/opt/homebrew/bin/caddy</string>
-		<string>run</string>
-		<string>--config</string>
-		<string>/Users/travis/Developer/repos/neuralj/openlaputa/caddy/Caddyfile</string>
+		<string>/opt/homebrew/bin/supervisord</string>
+		<string>-c</string>
+		<string>/Users/travis/Developer/repos/neuralj/openlaputa/supervisor/supervisord.conf</string>
+		<string>--nodaemon</string>
 	</array>
 	<key>WorkingDirectory</key>
 	<string>/Users/travis/Developer/repos/neuralj/openlaputa</string>
@@ -18,11 +18,13 @@
 	<key>KeepAlive</key>
 	<true/>
 	<key>StandardOutPath</key>
-	<string>/Users/travis/Developer/repos/neuralj/openlaputa/caddy/logs/caddy.log</string>
+	<string>/Users/travis/Developer/repos/neuralj/openlaputa/logs/supervisord-stdout.log</string>
 	<key>StandardErrorPath</key>
-	<string>/Users/travis/Developer/repos/neuralj/openlaputa/caddy/logs/caddy.log</string>
+	<string>/Users/travis/Developer/repos/neuralj/openlaputa/logs/supervisord-stderr.log</string>
 	<key>EnvironmentVariables</key>
 	<dict>
+		<key>REPO_ROOT</key>
+		<string>/Users/travis/Developer/repos/neuralj/openlaputa</string>
 		<key>PATH</key>
 		<string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
 	</dict>

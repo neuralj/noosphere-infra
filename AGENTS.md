@@ -87,4 +87,66 @@ images:
 gh workflow run build.yml -R neuralj/openlaputa
 ```
 
+## macOS 本地基础设施
+
+openlaputa 仓库作为本地开发环境的**基础设施中心**，统一管理所有 `*.neuralj.com` 服务。
+
+### 架构
+
+```
+launchd (系统级, 1 个 plist)
+└── supervisord (用户态进程管理器)
+    ├── caddy              → :443
+    ├── viewer             → :3000
+    ├── opensheeta-dash    → :3099
+    └── bulletin-monitor   → :3093
+```
+
+- **进程管理**: supervisord (`brew install supervisor`)
+- **配置位置**: `supervisor/supervisord.conf` + `supervisor/programs/*.conf`
+- **launchd plist**: `scripts/com.neuralj.openlaputa.plist` → `~/Library/LaunchAgents/`
+- **日志目录**: `logs/` (统一管理所有服务日志)
+- **运行时目录**: `run/` (supervisor socket, pid file)
+
+### 管理命令
+
+```bash
+./scripts/services status              # 查看所有服务状态
+./scripts/services start [service]     # 启动服务
+./scripts/services stop [service]      # 停止服务
+./scripts/services restart [service]   # 重启服务
+./scripts/services logs [service]      # 查看日志 (tail -f)
+./scripts/services reload              # 重新加载配置
+./scripts/services build viewer        # 构建 viewer
+```
+
+### Caddy 反向代理
+
+- **配置位置**: `caddy/Caddyfile` + `caddy/sites/*`
+- **SSL 证书**: `caddy/ssl/{fullchain.pem,privkey.pem}` (mkcert 生成)
+
+### 代理的域名
+
+| 域名 | 后端 | 端口 | 项目 |
+|------|------|------|------|
+| `openlaputa.neuralj.com` | localhost | 3000 | openlaputa/viewer |
+| `opensheeta.neuralj.com` | localhost | 3099 | opensheeta/dashboard |
+| `bulletin-monitor.neuralj.com` | localhost | 3093 | a-bulletin/monitor |
+
+### 添加新服务
+
+1. 在 `supervisor/programs/` 创建 `<service>.conf`
+2. 如需反向代理，在 `caddy/sites/` 创建对应配置
+3. 在 `/etc/hosts` 添加域名映射（如需要）
+4. 运行 `./scripts/services reload`
+
+### 服务列表
+
+| 服务 | 端口 | 代码位置 |
+|------|------|----------|
+| caddy | 443 | homebrew |
+| openlaputa-panel | 3000 | openlaputa/panel |
+| opensheeta-panel | 3099 | opensheeta/panel |
+| a-bulletin-panel | 3093 | a-bulletin/panel |
+
 

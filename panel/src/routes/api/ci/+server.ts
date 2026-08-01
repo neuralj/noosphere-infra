@@ -12,6 +12,36 @@ const REPO = 'openlaputa';
 
 const execFileAsync = promisify(execFile);
 
+// GitHub API request using gh CLI (authenticated, higher rate limit)
+async function ghApiRequest(endpoint: string): Promise<any> {
+	try {
+		const { stdout } = await execFileAsync('gh', ['api', endpoint]);
+		return JSON.parse(stdout);
+	} catch (error) {
+		const err = error as Error;
+		throw new Error(`GitHub API error: ${err.message}`);
+	}
+}
+
+// Cache for workflow runs (30s TTL)
+let runsCache: { data: WorkflowRun[]; timestamp: number } | null = null;
+const CACHE_TTL = 30 * 1000; // 30 seconds
+
+function getCachedRuns(): WorkflowRun[] | null {
+	if (runsCache && Date.now() - runsCache.timestamp < CACHE_TTL) {
+		return runsCache.data;
+	}
+	return null;
+}
+
+function setCachedRuns(data: WorkflowRun[]) {
+	runsCache = { data, timestamp: Date.now() };
+}
+
+function invalidateRunsCache() {
+	runsCache = null;
+}
+
 interface WorkflowRun {
 	id: number;
 	name: string;
@@ -84,7 +114,7 @@ async function triggerBuild() {
 			headers: {
 				'Accept': 'application/vnd.github.v3+json',
 				'Authorization': `Bearer ${cleanToken}`,
-				'User-Agent': 'openlaputa-viewer',
+				'User-Agent': 'openlaputa-panel',
 				'Content-Type': 'application/json'
 			},
 			body: JSON.stringify({ ref: 'main' })
@@ -95,6 +125,9 @@ async function triggerBuild() {
 		const errorText = await response.text();
 		throw new Error(`GitHub API error: ${response.status} - ${errorText}`);
 	}
+
+	// Invalidate cache after triggering build
+	invalidateRunsCache();
 
 	return { success: true, message: 'Build triggered successfully' };
 }
@@ -126,23 +159,13 @@ async function getOverview() {
 	};
 }
 
-async function getWorkflowRuns(limit = 30): Promise<WorkflowRun[]> {
-	const response = await fetch(
-		`${GITHUB_API}/repos/${OWNER}/${REPO}/actions/runs?per_page=${limit}`,
-		{
-			headers: {
-				'Accept': 'application/vnd.github.v3+json',
-				'User-Agent': 'openlaputa-viewer'
-			}
-		}
-	);
+async function getWorkflowRuns(limit = 5): Promise<WorkflowRun[]> {
+	// Check cache first
+	const cached = getCachedRuns();
+	if (cached) return cached.slice(0, limit);
 
-	if (!response.ok) {
-		throw new Error(`GitHub API error: ${response.status}`);
-	}
-
-	const data = await response.json();
-	return data.workflow_runs.map((run: any) => ({
+	const data = await ghApiRequest(`/repos/${OWNER}/${REPO}/actions/runs?per_page=${limit}`);
+	const runs = data.workflow_runs.map((run: any) => ({
 		id: run.id,
 		name: run.name,
 		head_branch: run.head_branch,
@@ -154,24 +177,14 @@ async function getWorkflowRuns(limit = 30): Promise<WorkflowRun[]> {
 		run_number: run.run_number,
 		event: run.event
 	}));
+
+	// Cache the result
+	setCachedRuns(runs);
+	return runs;
 }
 
 async function getJobs(runId: string): Promise<Job[]> {
-	const response = await fetch(
-		`${GITHUB_API}/repos/${OWNER}/${REPO}/actions/runs/${runId}/jobs`,
-		{
-			headers: {
-				'Accept': 'application/vnd.github.v3+json',
-				'User-Agent': 'openlaputa-viewer'
-			}
-		}
-	);
-
-	if (!response.ok) {
-		throw new Error(`GitHub API error: ${response.status}`);
-	}
-
-	const data = await response.json();
+	const data = await ghApiRequest(`/repos/${OWNER}/${REPO}/actions/runs/${runId}/jobs`);
 	return data.jobs.map((job: any) => ({
 		id: job.id,
 		name: job.name,

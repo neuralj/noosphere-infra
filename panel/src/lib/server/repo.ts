@@ -5,7 +5,7 @@ import { existsSync } from 'fs';
 export function findRepoRoot(): string {
 	let dir = dirname(fileURLToPath(import.meta.url));
 	while (dir !== '/') {
-		if (existsSync(join(dir, 'caddy', 'Caddyfile')) && existsSync(join(dir, 'viewer'))) {
+		if (existsSync(join(dir, 'caddy', 'Caddyfile')) && existsSync(join(dir, 'panel'))) {
 			return dir;
 		}
 		dir = dirname(dir);

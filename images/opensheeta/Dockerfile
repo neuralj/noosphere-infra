@@ -19,7 +19,7 @@ ARG SHEETA_BRANCH=main
 RUN git clone --depth=1 --branch=${SHEETA_BRANCH} ${SHEETA_REPO} .
 
 RUN npm ci && npm cache clean --force
-RUN npm run build
+RUN npm run build:backend
 
 # Production stage
 FROM docker.m.daocloud.io/library/node:22-bookworm-slim
@@ -56,9 +56,10 @@ RUN mkdir -p /data /home/opensheeta/.config/opensheeta \
 
 USER opensheeta
 
-ENV OS_STATE_DIR=/data \
-    OS_INBOX_DB=/data/inbox.db \
+ENV OS_INBOX_DB=/data/inbox.db \
     OS_CONV_DB=/data/conversations.db \
+    OS_TASKS_DB=/data/tasks.db \
+    OW_MEMORY_DB=/data/memory.db \
     OS_SECRETS_PATH=/data/secrets.json
 
 EXPOSE 8765 8766 4096

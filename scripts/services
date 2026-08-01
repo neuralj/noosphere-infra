@@ -2,10 +2,14 @@
 set -e
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-PLIST_DIR="$REPO_ROOT/scripts"
-LAUNCH_AGENTS="$HOME/Library/LaunchAgents"
+SUPERVISOR_CONF="$REPO_ROOT/supervisor/supervisord.conf"
+export REPO_ROOT
 
-SERVICES=(caddy viewer)
+ctl() {
+    supervisorctl -c "$SUPERVISOR_CONF" "$@"
+}
+
+SERVICES=(caddy openlaputa-panel opensheeta-panel a-bulletin-panel)
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -21,8 +25,9 @@ Commands:
   start [service]     Start service(s)
   stop [service]      Stop service(s)
   restart [service]   Restart service(s)
-  logs [service]      Show logs (tail -f)
-  build viewer        Build viewer
+  logs [service]      Show logs (tail -f, default: supervisord)
+  reload              Reread config & restart changed services
+  build <target>      Build a service (e.g. viewer)
 
 Services: ${SERVICES[*]}
 
@@ -31,132 +36,55 @@ Examples:
   $0 start
   $0 restart caddy
   $0 logs viewer
+  $0 reload
   $0 build viewer
 EOF
-}
-
-plist_loaded() {
-    local svc=$1
-    launchctl list | grep -q "com.neuralj.$svc"
-}
-
-get_pid() {
-    local svc=$1
-    launchctl list | grep "com.neuralj.$svc" | awk '{print $1}'
 }
 
 get_port() {
     local svc=$1
     case $svc in
         caddy) echo "443" ;;
-        viewer) echo "3000" ;;
+        openlaputa-panel) echo "3000" ;;
+        opensheeta-panel) echo "3099" ;;
+        a-bulletin-panel) echo "3093" ;;
     esac
 }
 
 do_status() {
-    printf "%-12s %-10s %-6s %-8s\n" "SERVICE" "STATUS" "PORT" "PID"
-    printf "%-12s %-10s %-6s %-8s\n" "-------" "------" "----" "---"
+    printf "%-18s %-10s %-6s %-8s\n" "SERVICE" "STATUS" "PORT" "PID"
+    printf "%-18s %-10s %-6s %-8s\n" "-------" "------" "----" "---"
     for svc in "${SERVICES[@]}"; do
         local port=$(get_port $svc)
-        if plist_loaded $svc; then
-            local pid=$(get_pid $svc)
-            if [ "$pid" != "-" ] && [ -n "$pid" ]; then
-                printf "%-12s ${GREEN}%-10s${NC} %-6s %-8s\n" "$svc" "running" "$port" "$pid"
-            else
-                printf "%-12s ${YELLOW}%-10s${NC} %-6s %-8s\n" "$svc" "stopped" "$port" "-"
-            fi
+        local line
+        line=$(ctl status "$svc" 2>/dev/null || true)
+        if echo "$line" | grep -q "RUNNING"; then
+            local pid=$(echo "$line" | awk '{print $4}' | sed 's/,//')
+            printf "%-18s ${GREEN}%-10s${NC} %-6s %-8s\n" "$svc" "running" "$port" "$pid"
+        elif echo "$line" | grep -q "STOPPED\|EXITED"; then
+            printf "%-18s ${YELLOW}%-10s${NC} %-6s %-8s\n" "$svc" "stopped" "$port" "-"
         else
-            printf "%-12s ${RED}%-10s${NC} %-6s %-8s\n" "$svc" "not loaded" "$port" "-"
+            printf "%-18s ${RED}%-10s${NC} %-6s %-8s\n" "$svc" "unknown" "$port" "-"
         fi
     done
 }
 
-load_plist() {
-    local svc=$1
-    local plist="$PLIST_DIR/com.neuralj.$svc.plist"
-    if [ ! -f "$plist" ]; then
-        echo "Error: $plist not found"
+do_logs() {
+    local target=${1:-supervisord}
+    local logfile="$REPO_ROOT/logs/$target.log"
+    if [ ! -f "$logfile" ]; then
+        echo "Log file not found: $logfile"
+        echo "Available: $(ls $REPO_ROOT/logs/*.log 2>/dev/null | xargs -I{} basename {} .log | tr '\n' ' ')"
         return 1
     fi
-    mkdir -p "$LAUNCH_AGENTS"
-    cp "$plist" "$LAUNCH_AGENTS/"
-    launchctl load "$LAUNCH_AGENTS/com.neuralj.$svc.plist"
-    echo "$svc started"
-}
-
-unload_plist() {
-    local svc=$1
-    if plist_loaded $svc; then
-        launchctl unload "$LAUNCH_AGENTS/com.neuralj.$svc.plist" 2>/dev/null || true
-        rm -f "$LAUNCH_AGENTS/com.neuralj.$svc.plist"
-        echo "$svc stopped"
-    else
-        echo "$svc not running"
-    fi
-}
-
-do_start() {
-    local target=$1
-    if [ -n "$target" ]; then
-        load_plist $target
-    else
-        for svc in "${SERVICES[@]}"; do
-            if ! plist_loaded $svc; then
-                load_plist $svc
-            else
-                echo "$svc already running"
-            fi
-        done
-    fi
-}
-
-do_stop() {
-    local target=$1
-    if [ -n "$target" ]; then
-        unload_plist $target
-    else
-        for svc in "${SERVICES[@]}"; do
-            unload_plist $svc
-        done
-    fi
-}
-
-do_restart() {
-    local target=$1
-    if [ -n "$target" ]; then
-        unload_plist $target
-        sleep 1
-        load_plist $target
-    else
-        do_stop
-        sleep 1
-        do_start
-    fi
-}
-
-do_logs() {
-    local target=$1
-    case $target in
-        caddy)
-            tail -f "$REPO_ROOT/caddy/logs/caddy.log"
-            ;;
-        viewer)
-            tail -f "$REPO_ROOT/viewer/logs/viewer.log"
-            ;;
-        "")
-            echo "Specify service: caddy or viewer"
-            ;;
-        *)
-            echo "Unknown service: $target"
-            ;;
-    esac
+    tail -f "$logfile"
 }
 
 do_build() {
     local target=$1
     case $target in
-        viewer)
-            cd "$REPO_ROOT/viewer" && npm run build
+        openlaputa-panel)
+            cd "$REPO_ROOT/panel" && npm run build
             ;;
         "")
             echo "Specify what to build: viewer"
@@ -173,10 +101,11 @@ target=$1
 
 case $cmd in
     status)  do_status ;;
-    start)   do_start $target ;;
-    stop)    do_stop $target ;;
-    restart) do_restart $target ;;
+    start)   ctl start ${target:-all} ;;
+    stop)    ctl stop ${target:-all} ;;
+    restart) ctl restart ${target:-all} ;;
     logs)    do_logs $target ;;
+    reload)  ctl reread && ctl update ;;
     build)   do_build $target ;;
     *)       usage ;;
 esac

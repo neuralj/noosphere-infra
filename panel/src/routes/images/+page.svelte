@@ -73,25 +73,26 @@
 			const runs = await res.json();
 			const map = new Map<string, BuildInfo>();
 
-			for (const run of runs) {
-				if (run.conclusion === 'success' || run.conclusion === 'failure') {
-					const res2 = await fetch(`/api/ci?action=jobs&run_id=${run.id}`);
-					const jobs = await res2.json();
-					for (const job of jobs) {
-						if (job.name.startsWith('build (')) {
-							const match = job.name.match(/build \(([^,]+)/);
-							if (match) {
-								const imageName = match[1];
-								if (!map.has(imageName)) {
-									map.set(imageName, {
-										status: run.status,
-										conclusion: run.conclusion,
-										runNumber: run.run_number,
-										time: formatTimeAgo(run.created_at),
-										htmlUrl: run.html_url
-									});
-								}
-							}
+			const latestCompletedRun = runs.find(
+				(r: any) => r.conclusion === 'success' || r.conclusion === 'failure'
+			);
+
+			if (latestCompletedRun) {
+				const res2 = await fetch(`/api/ci?action=jobs&run_id=${latestCompletedRun.id}`);
+				const jobs = await res2.json();
+
+				for (const job of jobs) {
+					if (job.name.startsWith('build (')) {
+						const match = job.name.match(/build \(([^,]+)/);
+						if (match) {
+							const imageName = match[1];
+							map.set(imageName, {
+								status: latestCompletedRun.status,
+								conclusion: latestCompletedRun.conclusion,
+								runNumber: latestCompletedRun.run_number,
+								time: formatTimeAgo(latestCompletedRun.created_at),
+								htmlUrl: latestCompletedRun.html_url
+							});
 						}
 					}
 				}

@@ -1,4 +1,7 @@
-caddy/logs/
-viewer/logs/
-viewer/build/
-viewer/node_modules/
+# Runtime
+logs/
+run/
+
+# Viewer
+panel/build/
+panel/node_modules/
