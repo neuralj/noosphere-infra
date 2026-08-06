@@ -88,6 +88,31 @@ The workspace container mounts:
 - `/noosphere` → NVMe data disk
 - `/home/travis/noosphere_space/noosphere` → Code repository
 
+## Pack to LLM Context
+
+The panel embeds a TypeScript port of [code2llm](https://github.com/example/code2llm)
+(`panel/src/lib/server/code2llm/`) — package any allowed codebase into LLM-ready
+context with token-aware segmentation:
+
+- **Formats**: Markdown (segmented / single), JSONL (RAG / fine-tune), XML (large context)
+- **Profiles**: `review` / `rag` / `finetune` / `context`
+- **Discovery**: recursive `.gitignore`, binary sniffing, `@LLM_IGNORE` stripping (line-count preserving)
+- **Review → apply**: paste an LLM review with a ```review-patch block, parse findings, insert TODO comments at the cited lines
+- **Token counting**: exact tokenizer for short text, heuristic (`chars/4`) above 2 KB — bounded, fast, stable
+
+Use it from the panel at **`/pack`** (sidebar → Pack). Outputs land in
+`run/pack-out/<project>-<ts>/` (gitignored). Packs are restricted to the repo
+root; extend with the `ALLOWED_PACK_DIRS` env var (comma-separated paths) and
+bound history with `PACK_KEEP_MAX` (default 30, auto-pruned on each pack).
+Filters (`include`/`exclude` globs) are supported in the form and API. History
+can be deleted or cleaned from the UI.
+
+### Tests
+
+```bash
+cd panel && npm test    # vitest: tokenize / format / discovery / packer / apply
+```
+
 ## License
 
 MIT

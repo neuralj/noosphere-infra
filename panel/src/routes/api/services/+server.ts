@@ -8,6 +8,7 @@ import { findRepoRoot } from '$lib/server/repo';
 const REPO_ROOT = findRepoRoot();
 const SUPERVISOR_CONF = join(REPO_ROOT, 'supervisor', 'supervisord.conf');
 const PROGRAMS_DIR = join(REPO_ROOT, 'supervisor', 'programs');
+const SITES_DIR = join(REPO_ROOT, 'caddy', 'sites');
 const execFileAsync = promisify(execFile);
 
 interface ServiceInfo {
@@ -20,6 +21,7 @@ interface ServiceInfo {
 	directory: string;
 	logFile: string;
 	logTail: string[];
+	domains: string[];
 }
 
 interface ConfData {
@@ -56,6 +58,44 @@ async function parseCaddyPort(): Promise<number> {
 	} catch {
 		return 443;
 	}
+}
+
+async function getPortDomainsMap(): Promise<Map<number, string[]>> {
+	const portDomains = new Map<number, string[]>();
+	
+	try {
+		const files = await readdir(SITES_DIR);
+		const siteFiles = files.filter((f: string) => f !== '.gitkeep');
+		
+		for (const file of siteFiles) {
+			const content = await readFile(join(SITES_DIR, file), 'utf-8');
+			
+			// 提取域名
+			const domainMatch = content.match(/^([^{]+)\{/m);
+			if (!domainMatch) continue;
+			
+			const domains = domainMatch[1].trim().split(',').map(d => d.trim()).filter(d => d);
+			
+			// 提取端口
+			const portMatches = [...content.matchAll(/reverse_proxy\s+localhost:(\d+)/g)];
+			for (const match of portMatches) {
+				const port = parseInt(match[1], 10);
+				if (!portDomains.has(port)) {
+					portDomains.set(port, []);
+				}
+				const existingDomains = portDomains.get(port)!;
+				for (const domain of domains) {
+					if (!existingDomains.includes(domain)) {
+						existingDomains.push(domain);
+					}
+				}
+			}
+		}
+	} catch {
+		// 忽略错误，返回空映射
+	}
+	
+	return portDomains;
 }
 
 async function readLogTail(logPath: string, lines: number = 20): Promise<string[]> {
@@ -95,6 +135,7 @@ export async function GET() {
 		const envRepoRoot = REPO_ROOT;
 		const supervisorStatus = await getSupervisorStatus();
 		const caddyPort = await parseCaddyPort();
+		const portDomainsMap = await getPortDomainsMap();
 
 		const services: ServiceInfo[] = [];
 
@@ -112,6 +153,7 @@ export async function GET() {
 			}
 
 			const logTail = conf.logFile ? await readLogTail(conf.logFile) : [];
+			const domains = portDomainsMap.get(port) || [];
 
 			services.push({
 				name,
@@ -122,7 +164,8 @@ export async function GET() {
 				command: conf.command,
 				directory: conf.directory,
 				logFile: conf.logFile,
-				logTail
+				logTail,
+				domains
 			});
 		}
 

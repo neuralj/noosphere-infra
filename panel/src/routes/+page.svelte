@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
 	import * as Card from '$lib/components/ui/card/index.js';
-	import { Button } from '$lib/components/ui/button/index.js';
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 
 	interface Commit {
@@ -38,7 +37,6 @@
 	let services = $state<Service[]>([]);
 	let ciStatus = $state<CIStatus | null>(null);
 	let loading = $state(true);
-	let triggerLoading = $state(false);
 	let intervalId: ReturnType<typeof setInterval> | null = null;
 
 	async function fetchAll() {
@@ -48,30 +46,24 @@
 				fetch('/api/services'),
 				fetch('/api/ci?action=overview')
 			]);
-			const logData = await logRes.json();
-			const servicesData = await servicesRes.json();
-			const ciData = await ciRes.json();
-			commits = logData.commits || [];
-			services = servicesData.services || [];
-			ciStatus = ciData;
+			if (logRes.ok) {
+				const logData = await logRes.json();
+				commits = logData.commits || [];
+			}
+			if (servicesRes.ok) {
+				const servicesData = await servicesRes.json();
+				services = servicesData.services || [];
+			}
+			if (ciRes.ok) {
+				const ciData = await ciRes.json();
+				if (ciData && !ciData.error) {
+					ciStatus = ciData;
+				}
+			}
 		} catch (e) {
 			console.error('Failed to fetch dashboard data:', e);
 		} finally {
 			loading = false;
-		}
-	}
-
-	async function triggerBuild() {
-		triggerLoading = true;
-		try {
-			const res = await fetch('/api/ci?action=trigger', { method: 'POST' });
-			if (res.ok) {
-				await fetchAll();
-			}
-		} catch (e) {
-			console.error('Failed to trigger build:', e);
-		} finally {
-			triggerLoading = false;
 		}
 	}
 
@@ -143,14 +135,9 @@
 </script>
 
 <div class="p-6 max-w-7xl mx-auto space-y-6">
-	<div class="flex items-center justify-between">
-		<div>
-			<h1 class="text-2xl font-bold text-accent-blue">OpenLaputa Infrastructure</h1>
-			<p class="text-muted-foreground mt-1">Repository overview and infrastructure status</p>
-		</div>
-		<Button onclick={triggerBuild} disabled={triggerLoading}>
-			{triggerLoading ? '⏳ Triggering...' : '🚀 Trigger Build'}
-		</Button>
+	<div>
+		<h1 class="text-2xl font-bold text-accent-blue">OpenLaputa Infrastructure</h1>
+		<p class="text-muted-foreground mt-1">Repository overview and infrastructure status</p>
 	</div>
 
 	{#if loading}
@@ -177,22 +164,22 @@
 			<Card.Root>
 				<Card.Content class="p-4">
 					<p class="text-xs text-muted-foreground">Images</p>
-					<p class="text-2xl font-bold text-accent-blue">{ciStatus?.images.length || 0}</p>
+					<p class="text-2xl font-bold text-accent-blue">{ciStatus?.images?.length ?? 0}</p>
 					<p class="text-xs text-muted-foreground mt-1">managed</p>
 				</Card.Content>
 			</Card.Root>
 			<Card.Root>
 				<Card.Content class="p-4">
 					<p class="text-xs text-muted-foreground">CI Builds</p>
-					<p class="text-2xl font-bold text-accent-yellow">{ciStatus?.stats.total || 0}</p>
+					<p class="text-2xl font-bold text-accent-yellow">{ciStatus?.stats?.total ?? 0}</p>
 					<p class="text-xs text-muted-foreground mt-1">total</p>
 				</Card.Content>
 			</Card.Root>
 			<Card.Root>
 				<Card.Content class="p-4">
 					<p class="text-xs text-muted-foreground">Success Rate</p>
-					<p class="text-2xl font-bold {ciStatus && ciStatus.stats.successRate >= 80 ? 'text-green-500' : 'text-red-500'}">
-						{ciStatus?.stats.successRate || 0}%
+					<p class="text-2xl font-bold {(ciStatus?.stats?.successRate ?? 0) >= 80 ? 'text-green-500' : 'text-red-500'}">
+						{ciStatus?.stats?.successRate ?? 0}%
 					</p>
 					<p class="text-xs text-muted-foreground mt-1">last 30 builds</p>
 				</Card.Content>
@@ -281,7 +268,7 @@
 							<Card.Title class="text-sm">Latest CI Build</Card.Title>
 						</Card.Header>
 						<Card.Content>
-							{#if ciStatus.recentRuns.length > 0}
+							{#if ciStatus?.recentRuns && ciStatus.recentRuns.length > 0}
 								{@const latest = ciStatus.recentRuns[0]}
 								<div class="space-y-2">
 									<div class="flex items-center gap-2">

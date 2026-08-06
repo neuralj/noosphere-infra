@@ -114,6 +114,12 @@
 	--color-accent-purple: #cba6f7;
 	--color-accent-blue: #89b4fa;
 	--color-accent-teal: #94e2d5;
+	--color-surface: #1e1e2e;
+	--color-surface-light: #2a2a3e;
+	--color-surface-lighter: #363650;
+	--color-border-custom: #3e3e5e;
+	--color-text-main: #cdd6f4;
+	--color-text-muted: #7f849c;
 }
 
 body {

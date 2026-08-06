@@ -1,0 +1,103 @@
+{
+  "version": "1.0.0",
+  "description": "认知契约验收规则定义",
+  "agents_md_validation": {
+    "five_layer_coverage": {
+      "required_layers": ["价值层", "规则层", "结构层", "概念层", "感知层"],
+      "severity": "error",
+      "message": "agents.md 必须包含完整的五层认知架构"
+    },
+    "value_layer_requirements": {
+      "required_sections": ["核心定位", "不做什么", "优先级规则", "对齐原则"],
+      "severity": "error",
+      "message": "价值层必须包含核心定位、边界取舍、优先级规则"
+    },
+    "rule_layer_requirements": {
+      "required_sections": ["硬约束", "运行约束"],
+      "severity": "error",
+      "message": "规则层必须包含硬约束和运行约束"
+    },
+    "structure_layer_requirements": {
+      "required_sections": ["依赖关系", "执行链路"],
+      "severity": "warning",
+      "message": "结构层建议包含依赖关系和执行链路"
+    },
+    "concept_layer_requirements": {
+      "required_sections": ["术语定义"],
+      "severity": "warning",
+      "message": "概念层建议包含术语定义"
+    },
+    "perception_layer_requirements": {
+      "required_sections": ["输入输出", "标准命令"],
+      "severity": "warning",
+      "message": "感知层建议包含输入输出和标准命令"
+    },
+    "metacognition_check": {
+      "required_section": "元认知自检记录",
+      "severity": "warning",
+      "message": "建议包含元认知自检记录"
+    },
+    "knowledge_network": {
+      "required_section": "知识三层网络",
+      "severity": "warning",
+      "message": "建议包含知识三层网络（原则层、模式层、案例层）"
+    }
+  },
+  "goals_json_validation": {
+    "cognitive_contract_metadata": {
+      "required_fields": ["version", "agents_md_hash", "last_sync"],
+      "severity": "error",
+      "message": "goals.json 必须包含 cognitive_contract 元数据"
+    },
+    "goal_cognitive_layer": {
+      "required_field": "cognitive_layer",
+      "allowed_values": ["价值层", "规则层", "结构层", "概念层", "感知层"],
+      "severity": "error",
+      "message": "每个 goal 必须关联认知层级"
+    },
+    "goal_knowledge_network": {
+      "recommended_fields": ["principle", "pattern", "instance"],
+      "severity": "warning",
+      "message": "建议每个 goal 关联知识三层网络"
+    },
+    "task_cognitive_validation": {
+      "recommended_field": "cognitive_validation",
+      "severity": "info",
+      "message": "建议任务包含认知校验信息"
+    }
+  },
+  "alignment_validation": {
+    "agents_goals_sync": {
+      "description": "agents.md 和 goals.json 的同步状态",
+      "check": "agents_md_hash 是否匹配",
+      "severity": "warning",
+      "message": "agents.md 和 goals.json 可能不同步"
+    },
+    "mental_model_completeness": {
+      "description": "心智模型完整度",
+      "threshold": 0.8,
+      "severity": "warning",
+      "message": "心智模型对齐度低于 80%"
+    }
+  },
+  "scoring": {
+    "excellent": {
+      "min_score": 90,
+      "description": "认知契约完整，可直接用于 AI 开发"
+    },
+    "good": {
+      "min_score": 70,
+      "max_score": 89,
+      "description": "认知契约基本完整，建议补充缺失部分"
+    },
+    "needs_improvement": {
+      "min_score": 50,
+      "max_score": 69,
+      "description": "认知契约存在较多缺失，需要重构"
+    },
+    "poor": {
+      "max_score": 49,
+      "description": "认知契约严重缺失，必须重新编写"
+    }
+  }
+}
